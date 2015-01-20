@@ -7,7 +7,7 @@ namespace L3DCube
     strip.setPixelColor(index,strip.Color(col.red, col.green, col.blue));
   }
 
-  void setVoxel(point p, Color col) {
+  void setVoxel(Point p, Color col) {
     setVoxel(p.x, p.y, p.z, col);
   }
 
@@ -21,13 +21,13 @@ namespace L3DCube
     return pixelColor;
   }
 
-  Color getVoxel(point p) {
+  Color getVoxel(Point p) {
     return getVoxel(p.x, p.y, p.z);
   }
 
   void line(int x1, int y1, int z1, int x2, int y2, int z2, Color col) {
     int i, dx, dy, dz, l, m, n, x_inc, y_inc, z_inc, err_1, err_2, dx2, dy2, dz2;
-    point currentPoint={p1.x, p1.y, p1.z};
+    Point currentPoint={p1.x, p1.y, p1.z};
     dx = p2.x - p1.x;
     dy = p2.y - p1.y;
     dz = p2.z - p1.z;
@@ -97,7 +97,7 @@ namespace L3DCube
     setPixel(currentPoint, col);
   }
 
-  void line(point p1, point p2, Color col) {
+  void line(Point p1, Point p2, Color col) {
     line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, col);
   }
 
@@ -113,7 +113,7 @@ namespace L3DCube
     }
   }
 
-  void sphere(point p, int r, Color col) {
+  void sphere(Point p, int r, Color col) {
     sphere(p.x, p.y, p.z, r, col);
   }
 
