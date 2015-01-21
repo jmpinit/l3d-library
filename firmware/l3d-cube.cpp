@@ -2,6 +2,7 @@
 #include "stub.h"
 #endif
 
+#include <math.h>
 #include "l3d-cube.h"
 
 using namespace L3D;

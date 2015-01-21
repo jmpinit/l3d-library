@@ -2,7 +2,6 @@
 #define _STUB_H
 
 #include <stdlib.h>
-#include <math.h>
 
 #define D0 0
 
