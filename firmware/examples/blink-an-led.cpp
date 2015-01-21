@@ -18,7 +18,9 @@ void setup() {
 
 void loop() {
   cube.setVoxel(4, 3, 2, white);
+  cube.show();
   delay(1000);
   cube.setVoxel(4, 3, 2, black);
+  cube.show();
   delay(1000);
 }
