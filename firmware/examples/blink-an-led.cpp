@@ -12,11 +12,13 @@ Color white = Color(255, 255, 255);
 
 Cube cube = Cube(8, 50);
 
-void setup() {
+void setup()
+{
   cube.background(black);
 }
 
-void loop() {
+void loop()
+{
   cube.setVoxel(4, 3, 2, white);
   cube.show();
   delay(1000);

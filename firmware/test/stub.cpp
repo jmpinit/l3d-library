@@ -1,14 +1,16 @@
 #include "stub.h"
 #include <unistd.h>
 
-void delay(long millis) {
+void delay(long millis)
+{
   usleep(millis * 1000);
 }
 
 void setup(void);
 void loop(void);
 
-int main() {
+int main()
+{
   setup();
 
   while(true)
