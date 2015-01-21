@@ -38,6 +38,7 @@ namespace L3D
 
     public:
       Cube(unsigned int size, unsigned int maxBrightness);
+
       void setVoxel(int x, int y, int z, Color col);
       void setVoxel(Point p, Color col);
       Color getVoxel(int x, int y, int z);
@@ -49,6 +50,8 @@ namespace L3D
       void background(Color col);
       Color colorMap(float var, float min, float max);
       Color lerpColor(Color a, Color b, int val, int min, int max);
+
+      void show(void);
   };
 }
 

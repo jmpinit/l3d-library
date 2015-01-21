@@ -178,3 +178,7 @@ Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 
   return Color(red, green, blue);
 }
+
+void Cube::show() {
+  strip.show();
+}
