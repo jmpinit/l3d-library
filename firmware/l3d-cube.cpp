@@ -170,10 +170,10 @@ void Cube::line(Point p1, Point p2, Color col)
 */
 void Cube::sphere(int x, int y, int z, int r, Color col)
 {
-  for(unsigned int dx = 0; dx < size; dx++) {
-    for(unsigned int dy = 0; dy < size; dy++) {
-      for(unsigned int dz = 0; dz < size; dz++) {
-        if(sqrt(pow(x-dx, 2) + pow(y-dy, 2) + pow(z-dz, 2)) <= r) {
+  for(int dx = -r; dx <= r; dx++) {
+    for(int dy = -r; dy <= r; dy++) {
+      for(int dz = -r; dz <= r; dz++) {
+        if(sqrt(dx*dx + dy*dy + dz*dz) <= r) {
           setVoxel(x + dx, y + dy, z + dz, col);
         }
       }
