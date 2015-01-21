@@ -1,6 +1,9 @@
 # build files
 obj/
 
+# generated documentation
+docs/
+
 # Vim swap files
 *.swp
 *.swo

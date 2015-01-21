@@ -32,3 +32,8 @@ $(BUILD_PATH)blink-an-led.o: firmware/examples/blink-an-led.cpp
 
 $(BUILD_PATH):
 	mkdir $@
+
+docs:
+	doxygen Doxyfile
+
+.PHONY: docs
