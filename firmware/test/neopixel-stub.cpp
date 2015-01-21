@@ -25,13 +25,13 @@ void Adafruit_NeoPixel::begin(void) {
 void Adafruit_NeoPixel::show(void) {
   if(!pixels) return;
 
-  cout << "show()";
+  cout << "show()" << endl;
 }
 
 // Set the output pin number
 void Adafruit_NeoPixel::setPin(uint8_t p) {
   pin = p;
-  cout << "setPin(" << p << ")";
+  cout << "setPin(" << p << ")" << endl;
 }
 
 // Set pixel color from separate R,G,B components:
