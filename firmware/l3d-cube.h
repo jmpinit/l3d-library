@@ -32,9 +32,9 @@ namespace L3D
 
   class Cube
   {
-    Adafruit_NeoPixel strip;
     unsigned int size;
     unsigned int maxBrightness;
+    Adafruit_NeoPixel strip;
 
     public:
       Cube(unsigned int size, unsigned int maxBrightness);
