@@ -1,0 +1,6 @@
+# build files
+obj/
+
+# Vim swap files
+*.swp
+*.swo
