@@ -13,6 +13,7 @@
 
 namespace L3D
 {
+  /**   An RGB color. */
   struct Color
   {
     unsigned char red, green, blue;
@@ -21,6 +22,7 @@ namespace L3D
     Color() : red(0), green(0), blue(0) {}
   };
 
+  /**   A point in 3D space.  */
   struct Point
   {
     float x;
@@ -30,6 +32,9 @@ namespace L3D
     Point(int x, int y, int z) : x(x), y(y), z(z) {}
   };
 
+  /**   An L3D LED cube.
+        Provides methods for drawing in 3D. Controls the LED hardware.
+  */
   class Cube
   {
     unsigned int size;
