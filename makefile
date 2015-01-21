@@ -10,12 +10,12 @@ SOURCES = firmware/test/stub.cpp \
 
 OBJECTS = $(addprefix $(BUILD_PATH),$(notdir $(SOURCES:.cpp=.o)))
 
-CPPFLAGS += -std=gnu++11 -D_TEST -Ifirmware -Ifirmware/test
+CPPFLAGS += -std=gnu++11 -fno-rtti -fno-exceptions -Werror=deprecated-declarations -Wall -D_TEST -Ifirmware -Ifirmware/test
 LDFLAGS =
 
 $(info $$BUILD_PATH is [${BUILD_PATH}])
 
-$(BUILD_PATH)blink-an-led: $(OBJECTS)
+$(BUILD_PATH)blink-an-led: $(BUILD_PATH) $(OBJECTS)
 	$(CPP) $(LDFLAGS) $(OBJECTS) --output $@ 
 
 $(BUILD_PATH)stub.o: firmware/test/stub.cpp
