@@ -5,7 +5,7 @@ BUILD_DIR = $(SELF_DIR)bin/
 
 FIRMWARE_DIR = ../spark/firmware/
 SRC_DIR = firmware/
-EXAMPLE_DIR = $(SRC_DIR)/examples/
+EXAMPLE_DIR = $(SRC_DIR)examples/
 
 EXAMPLES = $(wildcard $(EXAMPLE_DIR)*.cpp)
 EXAMPLE_BINS = $(addprefix $(BUILD_DIR),$(notdir $(patsubst %.cpp,%.bin,$(EXAMPLES))))
