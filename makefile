@@ -1,39 +1,36 @@
+LIB_NAME = l3d-cube
+
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
-BUILD_PATH = $(SELF_DIR)obj/
+BUILD_DIR = $(SELF_DIR)bin/
 
-include $(SELF_DIR)tools.mk
+FIRMWARE_DIR = ../spark/firmware/
+SRC_DIR = firmware/
+EXAMPLE_DIR = $(SRC_DIR)/examples/
 
-SOURCES = firmware/test/stub.cpp \
-					firmware/neopixel.cpp \
-					firmware/l3d-cube.cpp \
-					firmware/examples/blink-an-led.cpp
+EXAMPLES = $(wildcard $(EXAMPLE_DIR)*.cpp)
+EXAMPLE_BINS = $(addprefix $(BUILD_DIR),$(notdir $(patsubst %.cpp,%.bin,$(EXAMPLES))))
 
-OBJECTS = $(addprefix $(BUILD_PATH),$(notdir $(SOURCES:.cpp=.o)))
+SOURCES = firmware/l3d-cube.cpp \
+					firmware/neopixel.cpp
 
-CPPFLAGS += -std=gnu++11 -fno-rtti -fno-exceptions -Werror=deprecated-declarations -Wall -D_TEST -Ifirmware -Ifirmware/test
-LDFLAGS =
+export INCLUDE_DIRS = $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME)
 
-$(info $$BUILD_PATH is [${BUILD_PATH}])
+$(EXAMPLE_BINS): $(BUILD_DIR)%.bin : $(EXAMPLE_DIR)%.cpp $(SOURCES) | $(BUILD_DIR)
+	$(eval EXAMPLE_NAME=$(notdir $(basename $@)))
+	cp -r $(EXAMPLE_DIR) $(FIRMWARE_DIR)applications/$(EXAMPLE_NAME)
+	mkdir -p $(FIRMWARE_DIR)libraries/$(LIB_NAME)
+	cp -r $(SRC_DIR) $(FIRMWARE_DIR)libraries/$(LIB_NAME)/$(LIB_NAME)
+	cd $(FIRMWARE_DIR)build && $(MAKE) APP=$(EXAMPLE_NAME)
+	cp $(FIRMWARE_DIR)build/applications/$(EXAMPLE_NAME)/$(EXAMPLE_NAME).bin $@
 
-$(BUILD_PATH)blink-an-led: $(BUILD_PATH) $(OBJECTS)
-	$(CPP) $(LDFLAGS) $(OBJECTS) --output $@ 
-
-$(BUILD_PATH)stub.o: firmware/test/stub.cpp
-	$(CPP) $(CPPFLAGS) -c $< --output $@
-
-$(BUILD_PATH)neopixel.o: firmware/test/neopixel-stub.cpp
-	$(CPP) $(CPPFLAGS) -c $< --output $@
-
-$(BUILD_PATH)l3d-cube.o: firmware/l3d-cube.cpp
-	$(CPP) $(CPPFLAGS) -c $< --output $@
-
-$(BUILD_PATH)blink-an-led.o: firmware/examples/blink-an-led.cpp
-	$(CPP) $(CPPFLAGS) -c $< --output $@
-
-$(BUILD_PATH):
-	mkdir $@
+$(BUILD_DIR):
+	mkdir $(BUILD_DIR)
 
 docs:
 	doxygen Doxyfile
+
+clean:
+	-rm $(EXAMPLE_BINS)
+	rmdir $(BUILD_DIR)
 
 .PHONY: docs
