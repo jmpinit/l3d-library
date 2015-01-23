@@ -13,12 +13,13 @@ EXAMPLE_BINS = $(addprefix $(BUILD_DIR),$(notdir $(patsubst %.cpp,%.bin,$(EXAMPL
 SOURCES = firmware/l3d-cube.cpp \
 					firmware/neopixel.cpp
 
-export INCLUDE_DIRS = $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME)
+export INCLUDE_DIRS = $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME) $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME)/$(LIB_NAME)
 
 $(EXAMPLE_BINS): $(BUILD_DIR)%.bin : $(EXAMPLE_DIR)%.cpp $(SOURCES) | $(BUILD_DIR)
 	$(eval EXAMPLE_NAME=$(notdir $(basename $@)))
 	-rm -r $(FIRMWARE_DIR)applications/$(EXAMPLE_NAME)
 	cp -r $(EXAMPLE_DIR) $(FIRMWARE_DIR)applications/$(EXAMPLE_NAME)
+	cp $(SRC_DIR)*.cpp $(FIRMWARE_DIR)applications/$(EXAMPLE_NAME)
 	-rm -r $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	mkdir -p $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	cp -r $(SRC_DIR) $(FIRMWARE_DIR)libraries/$(LIB_NAME)/$(LIB_NAME)
