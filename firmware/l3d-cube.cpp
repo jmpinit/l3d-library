@@ -345,7 +345,7 @@ void Cube::checkCloudButton() {
     WiFi.listen();
 }
 
-/** Listen for the start of streaming */
+/** Listen for the start of UDP streaming. */
 void Cube::listen() {
   int32_t bytesrecv = this->udp.parsePacket();
 
@@ -376,6 +376,7 @@ void Cube::listen() {
   this->show();
 }
 
+/** Update the cube's knowledge of its own network address. */
 void Cube::updateNetworkInfo() {
   IPAddress myIp = WiFi.localIP();
   sprintf(this->localIP, "%d.%d.%d.%d", myIp[0], myIp[1], myIp[2], myIp[3]);
@@ -384,6 +385,11 @@ void Cube::updateNetworkInfo() {
   sprintf(this->macAddress, "%02x:%02x:%02x:%02x:%02x:%02x",macAddr[5],macAddr[4],macAddr[3],macAddr[2],macAddr[1],macAddr[0]);
 }
 
+/** Function to be called via Spark API for updating the streaming port number.
+    Resets the UDP connection with the new port.
+
+    @param _port A decimal number in a String, corresponding to the desired port number.
+*/
 int Cube::setPort(String _port) {
   this->port = _port.toInt();
   this->udp.begin(port);
