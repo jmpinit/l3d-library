@@ -11,6 +11,9 @@
 #define PIXEL_PIN D0
 #define PIXEL_TYPE WS2812B
 
+#define INTERNET_BUTTON D2
+#define MODE D3
+
 namespace L3D
 {
   /**   An RGB color. */
@@ -39,10 +42,12 @@ namespace L3D
   {
     unsigned int size;
     unsigned int maxBrightness;
+    bool onlinePressed;
+    bool lastOnline;
     Adafruit_NeoPixel strip;
 
     public:
-      Cube(unsigned int size, unsigned int maxBrightness);
+      Cube(unsigned int s=8, unsigned int mb=50);
 
       void setVoxel(int x, int y, int z, Color col);
       void setVoxel(Point p, Color col);
@@ -53,10 +58,13 @@ namespace L3D
       void sphere(int x, int y, int z, int r, Color col);
       void sphere(Point p, int r, Color col);
       void background(Color col);
-      Color colorMap(float var, float min, float max);
+
+      Color colorMap(float val, float min, float max);
       Color lerpColor(Color a, Color b, int val, int min, int max);
 
       void show(void);
+      void initCloudButton(void);
+      void checkCloudButton(void);
   };
 }
 

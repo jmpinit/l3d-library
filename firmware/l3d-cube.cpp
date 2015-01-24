@@ -1,7 +1,3 @@
-#ifdef _TEST
-#include "stub.h"
-#endif
-
 #include <math.h>
 #include "l3d-cube.h"
 
@@ -13,8 +9,14 @@ using namespace L3D;
 
   @return A new Cube object.
 */
-Cube::Cube(unsigned int s=8, unsigned int mb=50) : \
-    size(s), maxBrightness(mb), strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) {}
+Cube::Cube(unsigned int s, unsigned int mb) : \
+    size(s), 
+    maxBrightness(mb),
+    onlinePressed(false),
+    lastOnline(true),
+    strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) {
+    this->initCloudButton();
+}
 
 /** Set a voxel at a position to a color.
 
@@ -283,4 +285,48 @@ Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 void Cube::show()
 {
   strip.show();
+}
+
+/** Initialize cloud switch hardware. */
+void Cube::initCloudButton() {
+  //set the input mode for the 'connect to cloud' button
+  pinMode(INTERNET_BUTTON, INPUT_PULLUP);
+  pinMode(MODE, INPUT_PULLUP);
+
+  if(!digitalRead(MODE))
+    WiFi.listen();
+
+  //a.k.a. onlinePressed is HIGH when the switch is set to 'online' and LOW when the switch is set to 'offline'
+  this->onlinePressed = digitalRead(INTERNET_BUTTON);
+
+  if(onlinePressed)
+    Spark.connect();
+
+  void (Cube::*check)(void) = &Cube::checkCloudButton;
+  attachInterrupt(INTERNET_BUTTON, (void (*)())check, CHANGE);
+}
+
+/** Check cloud switch hardware. */
+void Cube::checkCloudButton() {
+  // if the 'connect to cloud' button is pressed, try to connect to wifi.  
+  // otherwise, run the program
+
+  // onlinePressed is HIGH when the switch is _not_ connected and LOW when the switch is connected
+  // a.k.a. onlinePressed is HIGH when the switch is set to 'online' and LOW when the switch is set to 'offline'
+  this->onlinePressed = digitalRead(INTERNET_BUTTON);
+  
+  if((!this->onlinePressed) && (this->lastOnline)) {
+    //marked as 'online'
+    this->lastOnline = this->onlinePressed;
+    Spark.connect();
+  } else if((this->onlinePressed) && (!this->lastOnline)) {
+    // marked as 'offline'
+    this->lastOnline = this->onlinePressed;
+    Spark.disconnect();
+  }
+
+  this->lastOnline = this->onlinePressed;
+
+  if(!digitalRead(MODE))
+    WiFi.listen();
 }
