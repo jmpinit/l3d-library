@@ -1,9 +1,5 @@
-#ifdef _TEST
-#include "l3d-cube.h"
-#include "stub.h"
-#else
 #include "l3d-cube/l3d-cube.h"
-#endif
+#include <math.h>
 
 using namespace L3D;
 
@@ -13,7 +9,6 @@ Color red = Color(255, 0, 0);
 Color green = Color(0, 255, 0);
 
 Cube cube = Cube(8, 50);
-int coords[] { 0, 7 };
 
 void setup()
 {
@@ -22,22 +17,26 @@ void setup()
 
 void loop()
 {
-  cube.background(black);
+  static int t = 0;
+  static const int stretch = 512;
 
-  for(int z1 : coords)
-    for(int y1 : coords)
-      for(int x1 : coords)
-        for(int z2 : coords)
-          for(int y2 : coords)
-            for(int x2 : coords)
-              cube.line(x1, y1, z1, x2, y2, z2, green);
+  Color color = cube.colorMap(t % stretch, 0, stretch);
+  Color opposite = cube.colorMap((t + stretch / 2) % stretch, 0, stretch);
 
-  cube.sphere(0, 0, 0, 3, red);
+  cube.background(color);
+  t++;
 
-  cube.setVoxel(4, 3, 2, white);
+  float slow_t = (float) t / 32;
+  cube.sphere(4 + 3*cos(slow_t), 4 + 3*sin(slow_t), 4 + 3*sin(slow_t), 2, red);
+  cube.line(0, 0, 0, 7, 7, 7, opposite);
+
+  if(t / 16 % 2 == 0) {
+    cube.setVoxel(7, 0, 7, black);
+    cube.setVoxel(0, 7, 0, white);
+  } else {
+    cube.setVoxel(7, 0, 7, white);
+    cube.setVoxel(0, 7, 0, black);
+  }
+
   cube.show();
-  delay(1000);
-  cube.setVoxel(4, 3, 2, black);
-  cube.show();
-  delay(1000);
 }
