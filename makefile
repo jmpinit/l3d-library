@@ -29,11 +29,11 @@ $(EXAMPLE_BINS): $(BUILD_DIR)%.bin : $(EXAMPLE_DIR)%.cpp $(SOURCES) | $(BUILD_DI
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
 
-docs:
+doc:
 	doxygen Doxyfile
 
 clean:
 	-rm $(EXAMPLE_BINS)
 	rmdir $(BUILD_DIR)
 
-.PHONY: docs
+.PHONY: doc

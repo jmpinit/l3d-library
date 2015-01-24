@@ -2,9 +2,6 @@
 obj/
 bin/
 
-# generated documentation
-docs/
-
 # Vim swap files
 *.swp
 *.swo
