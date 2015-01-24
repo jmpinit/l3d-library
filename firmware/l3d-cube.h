@@ -11,6 +11,8 @@
 #define INTERNET_BUTTON D2
 #define MODE D3
 
+#define STREAMING_PORT 2222
+
 namespace L3D
 {
   /**   An RGB color. */
@@ -42,9 +44,13 @@ namespace L3D
     bool onlinePressed;
     bool lastOnline;
     Adafruit_NeoPixel strip;
+    UDP udp;
+    int lastUpdated;
+    char localIP[24];
+    char macAddress[20];
+    int port;
 
     public:
-    UDP udp;
       Cube(unsigned int s=8, unsigned int mb=50);
 
       void setVoxel(int x, int y, int z, Color col);
@@ -65,6 +71,8 @@ namespace L3D
       void listen(void);
       void initCloudButton(void);
       void checkCloudButton(void);
+      void updateNetworkInfo(void);
+      int setPort(String port);
   };
 }
 

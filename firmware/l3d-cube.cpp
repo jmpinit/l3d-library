@@ -18,8 +18,18 @@ Cube::Cube(unsigned int s, unsigned int mb) : \
 
 /** Initialization of cube resources and environment. */
 void Cube::begin(void) {
+  this->updateNetworkInfo();
+
+  // initialize Spark variables
+  int (Cube::*setPort)(String) = &Cube::setPort;
+
+  Spark.variable("IPAddress", this->localIP, STRING);
+  Spark.variable("MACAddress", this->macAddress, STRING);
+  Spark.variable("port", &this->port, INT);
+  Spark.function("setPort", (int (*)(String)) setPort);
+
   this->initCloudButton();
-  this->udp.begin(1337);
+  this->udp.begin(STREAMING_PORT);
 }
 
 /** Set a voxel at a position to a color.
@@ -337,57 +347,45 @@ void Cube::checkCloudButton() {
 
 /** Listen for the start of streaming */
 void Cube::listen() {
-  /*if(this->udp.parsePacket() > 0) {
-    this->background(Color(0, 255, 0));
-    this->show();
-
-    while(udp.available()) {
-      char c = udp.read();
-      Serial.println(c);
-    }
-  }*/
-
   int32_t bytesrecv = this->udp.parsePacket();
 
   // no data, nothing to do
   if(bytesrecv == 0) return;
 
-  const int numPix = 21;
+  if(millis() - this->lastUpdated > 60000) {
+    //update the network settings every minute
+    this->updateNetworkInfo();
+    this->lastUpdated = millis();
+  }
 
-  char data[64];
-  static bool frameStart;
-  static int x, y, z;
-
-  if(bytesrecv == 64) {
-    this->udp.read(data, bytesrecv);
-    frameStart = true;
-    x = 0; y = 0; z = 0;
-  } else if(bytesrecv == 63) {
+  if(bytesrecv == PIXEL_COUNT) {
+    char data[512];
     this->udp.read(data, bytesrecv);
 
-    if(!frameStart) {
-      frameStart = true;
-
-      for(int i = 0; i < numPix*3; i++) {
-        if(data[i] != 255)
-          frameStart = false;
-      }
-    } else {
-      for(int i = 0; (i < numPix) && frameStart; i++) {
-        this->setVoxel(x, y, z, Color(data[i*3], data[i*3+1], data[i*3+2]));
-
-        x++;
-        if(x >= 8) y++;
-        if(y >= 8) z++;
-        if(z >= 8) {
-          strip.show();
-          frameStart = false;
+    for(unsigned int x = 0; x < this->size; x++) {
+      for(unsigned int y = 0; y < this->size; y++) {
+        for(unsigned int z = 0; z < this->size; z++) {
+          int index = z*64 + y*8 + x;
+          Color pixelColor = Color((data[index]&0xE0)>>2, (data[index]&0x1C)<<1, (data[index]&0x03)<<4);   //colors with max brightness set to 64
+          setVoxel(x, y, z, pixelColor);
         }
-
-        x = x % 8;
-        y = y % 8;
-        z = z % 8;
       }
     }
   }
+
+  this->show();
+}
+
+void Cube::updateNetworkInfo() {
+  IPAddress myIp = WiFi.localIP();
+  sprintf(this->localIP, "%d.%d.%d.%d", myIp[0], myIp[1], myIp[2], myIp[3]);
+  byte macAddr[6];
+  WiFi.macAddress(macAddr);
+  sprintf(this->macAddress, "%02x:%02x:%02x:%02x:%02x:%02x",macAddr[5],macAddr[4],macAddr[3],macAddr[2],macAddr[1],macAddr[0]);
+}
+
+int Cube::setPort(String _port) {
+  this->port = _port.toInt();
+  this->udp.begin(port);
+  return port;
 }
