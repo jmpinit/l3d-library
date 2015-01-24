@@ -1,10 +1,7 @@
 #ifndef _L3D_CUBE_H
 #define _L3D_CUBE_H
 
-#ifndef _TEST
 #include "application.h"
-#endif
-
 #include "neopixel.h"
 
 #define PIXEL_COUNT 512

@@ -39,11 +39,7 @@
 #ifndef SPARK_NEOPIXEL_H
 #define SPARK_NEOPIXEL_H
 
-#ifndef _TEST
 #include "application.h"
-#else
-#include <stdint.h>
-#endif
 
 // 'type' flags for LED pixels (third parameter to constructor):
 #define WS2812   0x02 // 800 KHz datastream (NeoPixel)
