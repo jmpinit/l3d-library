@@ -44,6 +44,7 @@ namespace L3D
     Adafruit_NeoPixel strip;
 
     public:
+    UDP udp;
       Cube(unsigned int s=8, unsigned int mb=50);
 
       void setVoxel(int x, int y, int z, Color col);
@@ -59,7 +60,9 @@ namespace L3D
       Color colorMap(float val, float min, float max);
       Color lerpColor(Color a, Color b, int val, int min, int max);
 
+      void begin(void);
       void show(void);
+      void listen(void);
       void initCloudButton(void);
       void checkCloudButton(void);
   };

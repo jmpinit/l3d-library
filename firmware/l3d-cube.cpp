@@ -8,21 +8,25 @@ using namespace L3D;
   @param mb Maximum brightness value. Used to prevent the LEDs from drawing too much current (which causes the colors to distort).
 
   @return A new Cube object.
-*/
+  */
 Cube::Cube(unsigned int s, unsigned int mb) : \
     size(s), 
     maxBrightness(mb),
     onlinePressed(false),
     lastOnline(true),
-    strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) {
-    this->initCloudButton();
+    strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) { }
+
+/** Initialization of cube resources and environment. */
+void Cube::begin(void) {
+  this->initCloudButton();
+  this->udp.begin(1337);
 }
 
 /** Set a voxel at a position to a color.
 
-    @param x, y, z Coordinate of the LED to set.
-    @param col Color to set the LED to.
-*/
+  @param x, y, z Coordinate of the LED to set.
+  @param col Color to set the LED to.
+  */
 void Cube::setVoxel(int x, int y, int z, Color col)
 {
   int index = (z*64) + (x*8) + y;
@@ -31,18 +35,18 @@ void Cube::setVoxel(int x, int y, int z, Color col)
 
 /** Set a voxel at a position to a color.
 
-    @param p Coordinate of the LED to set.
-    @param col Color to set the LED to.
-*/
+  @param p Coordinate of the LED to set.
+  @param col Color to set the LED to.
+  */
 void Cube::setVoxel(Point p, Color col)
 {
   setVoxel(p.x, p.y, p.z, col);
 }
 
 /** Get the color of a voxel at a position.
-    
-    @param x, y, z Coordinate of the LED to get the color from.
-*/
+
+  @param x, y, z Coordinate of the LED to get the color from.
+  */
 Color Cube::getVoxel(int x, int y, int z)
 {
   int index = (z * this->size * this->size) + (x * this->size) + y;
@@ -52,21 +56,21 @@ Color Cube::getVoxel(int x, int y, int z)
 }
 
 /** Get the color of a voxel at a position.
-    
-    @param p Coordinate of the LED to get the color from.
-*/
+
+  @param p Coordinate of the LED to get the color from.
+  */
 Color Cube::getVoxel(Point p)
 {
   return getVoxel(p.x, p.y, p.z);
 }
 
 /** Draw a line in 3D space.
-    Uses the 3D form of Bresenham's algorithm.
-    
-    @param x1, y1, z1 Coordinate of start of line.
-    @param x2, y2, z2 Coordinate of end of line.
-    @param col Color of the line.
-*/
+  Uses the 3D form of Bresenham's algorithm.
+
+  @param x1, y1, z1 Coordinate of start of line.
+  @param x2, y2, z2 Coordinate of end of line.
+  @param col Color of the line.
+  */
 void Cube::line(int x1, int y1, int z1, int x2, int y2, int z2, Color col)
 {
   Point currentPoint = Point(x1, y1, z1);
@@ -111,7 +115,7 @@ void Cube::line(int x1, int y1, int z1, int x2, int y2, int z2, Color col)
 
     for(int i = 0; i < m; i++) {
       this->setVoxel(currentPoint, col);
-      
+
       if(err_1 > 0) {
         currentPoint.x += x_inc;
         err_1 -= dy2;
@@ -153,12 +157,12 @@ void Cube::line(int x1, int y1, int z1, int x2, int y2, int z2, Color col)
 }
 
 /** Draw a line in 3D space.
-    Uses the 3D form of Bresenham's algorithm.
-    
-    @param p1 Coordinate of start of line.
-    @param p2 Coordinate of end of line.
-    @param col Color of the line.
-*/
+  Uses the 3D form of Bresenham's algorithm.
+
+  @param p1 Coordinate of start of line.
+  @param p2 Coordinate of end of line.
+  @param col Color of the line.
+  */
 void Cube::line(Point p1, Point p2, Color col)
 {
   line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, col);
@@ -166,10 +170,10 @@ void Cube::line(Point p1, Point p2, Color col)
 
 /** Draw a filled sphere.
 
-    @param x, y, z Position of the center of the sphere.
-    @param r Radius of the sphere.
-    @param col Color of the sphere.
-*/
+  @param x, y, z Position of the center of the sphere.
+  @param r Radius of the sphere.
+  @param col Color of the sphere.
+  */
 void Cube::sphere(int x, int y, int z, int r, Color col)
 {
   for(int dx = -r; dx <= r; dx++) {
@@ -185,19 +189,19 @@ void Cube::sphere(int x, int y, int z, int r, Color col)
 
 /** Draw a filled sphere.
 
-    @param p Position of the center of the sphere.
-    @param r Radius of the sphere.
-    @param col Color of the sphere.
-*/
+  @param p Position of the center of the sphere.
+  @param r Radius of the sphere.
+  @param col Color of the sphere.
+  */
 void Cube::sphere(Point p, int r, Color col)
 {
   sphere(p.x, p.y, p.z, r, col);
 }
 
 /** Set the entire cube to one color.
-    
-    @param col The color to set all LEDs in the cube to.
-*/
+
+  @param col The color to set all LEDs in the cube to.
+  */
 void Cube::background(Color col)
 {
   for(unsigned int x = 0; x < this->size; x++)
@@ -207,14 +211,14 @@ void Cube::background(Color col)
 }
 
 /** Map a value into a color.
-    The set of colors fades from blue to green to red and back again.
+  The set of colors fades from blue to green to red and back again.
 
-    @param val Value to map into a color.
-    @param min Minimum value that val will take.
-    @param max Maximum value that val will take.
+  @param val Value to map into a color.
+  @param min Minimum value that val will take.
+  @param max Maximum value that val will take.
 
-    @return Color from value.
-*/
+  @return Color from value.
+  */
 Color Cube::colorMap(float val, float min, float max)
 {
   const float range = 1024;
@@ -262,14 +266,14 @@ Color Cube::colorMap(float val, float min, float max)
 
 /** Linear interpolation between colors.
 
-    @param a, b The colors to interpolate between.
-    @param val Position on the line between color a and color b.
-        When equal to min the output is color a, and when equal to max the output is color b.
-    @param min Minimum value that val will take.
-    @param max Maximum value that val will take.
+  @param a, b The colors to interpolate between.
+  @param val Position on the line between color a and color b.
+  When equal to min the output is color a, and when equal to max the output is color b.
+  @param min Minimum value that val will take.
+  @param max Maximum value that val will take.
 
-    @return Color between colors a and b.
-*/
+  @return Color between colors a and b.
+  */
 Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 {
   int red = a.red + (b.red-a.red) * (val-min) / (max-min);
@@ -280,8 +284,8 @@ Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 }
 
 /** Make changes to the cube visible.
-    Causes pixel data to be written to the LED strips.
-*/
+  Causes pixel data to be written to the LED strips.
+  */
 void Cube::show()
 {
   strip.show();
@@ -314,7 +318,7 @@ void Cube::checkCloudButton() {
   // onlinePressed is HIGH when the switch is _not_ connected and LOW when the switch is connected
   // a.k.a. onlinePressed is HIGH when the switch is set to 'online' and LOW when the switch is set to 'offline'
   this->onlinePressed = digitalRead(INTERNET_BUTTON);
-  
+
   if((!this->onlinePressed) && (this->lastOnline)) {
     //marked as 'online'
     this->lastOnline = this->onlinePressed;
@@ -329,4 +333,61 @@ void Cube::checkCloudButton() {
 
   if(!digitalRead(MODE))
     WiFi.listen();
+}
+
+/** Listen for the start of streaming */
+void Cube::listen() {
+  /*if(this->udp.parsePacket() > 0) {
+    this->background(Color(0, 255, 0));
+    this->show();
+
+    while(udp.available()) {
+      char c = udp.read();
+      Serial.println(c);
+    }
+  }*/
+
+  int32_t bytesrecv = this->udp.parsePacket();
+
+  // no data, nothing to do
+  if(bytesrecv == 0) return;
+
+  const int numPix = 21;
+
+  char data[64];
+  static bool frameStart;
+  static int x, y, z;
+
+  if(bytesrecv == 64) {
+    this->udp.read(data, bytesrecv);
+    frameStart = true;
+    x = 0; y = 0; z = 0;
+  } else if(bytesrecv == 63) {
+    this->udp.read(data, bytesrecv);
+
+    if(!frameStart) {
+      frameStart = true;
+
+      for(int i = 0; i < numPix*3; i++) {
+        if(data[i] != 255)
+          frameStart = false;
+      }
+    } else {
+      for(int i = 0; (i < numPix) && frameStart; i++) {
+        this->setVoxel(x, y, z, Color(data[i*3], data[i*3+1], data[i*3+2]));
+
+        x++;
+        if(x >= 8) y++;
+        if(y >= 8) z++;
+        if(z >= 8) {
+          strip.show();
+          frameStart = false;
+        }
+
+        x = x % 8;
+        y = y % 8;
+        z = z % 8;
+      }
+    }
+  }
 }

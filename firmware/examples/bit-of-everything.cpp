@@ -12,6 +12,7 @@ Cube cube = Cube(8, 50);
 
 void setup()
 {
+  cube.begin();
   cube.background(black);
 }
 
