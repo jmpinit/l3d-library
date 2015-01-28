@@ -3,7 +3,7 @@
 
 using namespace L3D;
 
-Cube cube = Cube(8, 50);
+Cube cube = Cube();
 
 void setup()
 {

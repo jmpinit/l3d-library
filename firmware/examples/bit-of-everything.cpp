@@ -8,7 +8,7 @@ Color white = Color(255, 255, 255);
 Color red = Color(255, 0, 0);
 Color green = Color(0, 255, 0);
 
-Cube cube = Cube(8, 50);
+Cube cube = Cube();
 
 void setup()
 {

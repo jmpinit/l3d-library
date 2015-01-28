@@ -16,6 +16,19 @@ Cube::Cube(unsigned int s, unsigned int mb) : \
     lastOnline(true),
     strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) { }
 
+/** Construct a new cube with default settings.
+  @param s Size of one side of the cube in number of LEDs.
+  @param mb Maximum brightness value. Used to prevent the LEDs from drawing too much current (which causes the colors to distort).
+
+  @return A new Cube object.
+  */
+Cube::Cube() : \
+    size(8), 
+    maxBrightness(50),
+    onlinePressed(false),
+    lastOnline(true),
+    strip(Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE)) { }
+
 /** Initialization of cube resources and environment. */
 void Cube::begin(void) {
   this->updateNetworkInfo();

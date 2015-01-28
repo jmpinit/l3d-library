@@ -51,7 +51,8 @@ namespace L3D
     int port;
 
     public:
-      Cube(unsigned int s=8, unsigned int mb=50);
+      Cube(unsigned int s, unsigned int mb);
+      Cube(void);
 
       void setVoxel(int x, int y, int z, Color col);
       void setVoxel(Point p, Color col);
