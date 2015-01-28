@@ -50,8 +50,11 @@ void Cube::begin(void) {
   */
 void Cube::setVoxel(int x, int y, int z, Color col)
 {
-  int index = (z*64) + (x*8) + y;
-  strip.setPixelColor(index, strip.Color(col.red, col.green, col.blue));
+  if(x >= 0 && y >= 0 && z >= 0 &&
+      x < this->size && y < this->size && z < this->size) {
+    int index = (z*64) + (x*8) + y;
+    strip.setPixelColor(index, strip.Color(col.red, col.green, col.blue));
+  }
 }
 
 /** Set a voxel at a position to a color.
