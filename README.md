@@ -7,7 +7,7 @@ This is the official library for use with the Spark Core in the [L3D Cube](http:
 
 It provides 3D drawing functions for writing visual effects and utility functions for working with color. The library also takes care of communication with the LED strips making up the cube.
 
-The API can be found in l3d-cube.h.
+The API can be found in l3d-cube.h. Further documentation can be found on the [L3D Cube website](http://docs.l3dcube.com/).
 
 # Example Usage
 
