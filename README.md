@@ -12,8 +12,6 @@ The API can be found in l3d-cube.h. Further documentation can be found on the [L
 # Example Usage
 
 ```C++
-using namespace L3D;
-
 Cube cube = Cube(8, 50); // 8^3 cube with max brightness of 50
 cube.begin(); // initialize the cube
 

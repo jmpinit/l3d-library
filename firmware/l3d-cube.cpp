@@ -1,8 +1,6 @@
 #include <math.h>
 #include "l3d-cube.h"
 
-using namespace L3D;
-
 /** Construct a new cube.
   @param s Size of one side of the cube in number of LEDs.
   @param mb Maximum brightness value. Used to prevent the LEDs from drawing too much current (which causes the colors to distort).
