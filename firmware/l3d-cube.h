@@ -37,16 +37,19 @@ struct Point
 */
 class Cube
 {
-  unsigned int size;
-  unsigned int maxBrightness;
-  bool onlinePressed;
-  bool lastOnline;
-  Adafruit_NeoPixel strip;
-  UDP udp;
-  int lastUpdated;
-  char localIP[24];
-  char macAddress[20];
-  int port;
+  private:
+    unsigned int size;
+    unsigned int maxBrightness;
+    bool onlinePressed;
+    bool lastOnline;
+    Adafruit_NeoPixel strip;
+    UDP udp;
+    int lastUpdated;
+    char localIP[24];
+    char macAddress[20];
+    int port;
+
+    void emptyFlatCircle(int x, int y, int z, int r, Color col);
 
   public:
     Cube(unsigned int s, unsigned int mb);
@@ -60,6 +63,8 @@ class Cube
     void line(Point p1, Point p2, Color col);
     void sphere(int x, int y, int z, int r, Color col);
     void sphere(Point p, int r, Color col);
+    void shell(int x, int y, int z, int r, Color col);
+    void shell(Point p, int r, Color col);
     void background(Color col);
 
     Color colorMap(float val, float min, float max);

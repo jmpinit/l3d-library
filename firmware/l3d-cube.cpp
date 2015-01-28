@@ -219,10 +219,70 @@ void Cube::sphere(Point p, int r, Color col)
   sphere(p.x, p.y, p.z, r, col);
 }
 
+/** Draw a shell (empty sphere).
+
+  @param p Position of the center of the shell.
+  @param r Radius of the shell.
+  @param col Color of the shell.
+*/
+void Cube::shell(int x, int y, int z, int r, Color col)
+{
+  for(int i = 0; i <= 2*r; i++) {
+    int dy = i - r;
+    int lr = sqrt((float)(i*(2*r-i)));
+    this->emptyFlatCircle(x, y + dy, z, lr, col);
+  }
+}
+
+/** Draw a shell (empty sphere).
+
+  @param p Position of the center of the shell.
+  @param r Radius of the shell.
+  @param col Color of the shell.
+*/
+void Cube::shell(Point p, int r, Color col)
+{
+  shell(p.x, p.y, p.z, r, col);
+}
+
+/** Draw an empty circle in the XZ plane.
+  Uses the midpoint circle algorithm.
+
+  @param p Position of the center of the circle.
+  @param r Radius of the circle.
+  @param col Color of the circle.
+*/
+void Cube::emptyFlatCircle(int x, int y, int z, int r, Color col)
+{
+  int dx = r;
+  int dy = 0;
+  int radiusError = 1 - dx;
+
+  while(dx >= dy) {
+    this->setVoxel(x + dx,  y, z + dy, col);
+    this->setVoxel(x + dy,  y, z + dx, col);
+    this->setVoxel(x + -dx, y, z + dy, col);
+    this->setVoxel(x + -dy, y, z + dx, col);
+    this->setVoxel(x + -dx, y, z + -dy, col);
+    this->setVoxel(x + -dy, y, z + -dx, col);
+    this->setVoxel(x + dx,  y, z + -dy, col);
+    this->setVoxel(x + dy,  y, z + -dx, col);
+
+    dy++;
+
+    if(radiusError<0) {
+      radiusError += 2 * dy + 1;
+    } else {
+      dx--;
+      radiusError += 2 * (dy - dx + 1);
+    }
+  }
+}
+
 /** Set the entire cube to one color.
 
   @param col The color to set all LEDs in the cube to.
-  */
+*/
 void Cube::background(Color col)
 {
   for(unsigned int x = 0; x < this->size; x++)
@@ -239,7 +299,7 @@ void Cube::background(Color col)
   @param max Maximum value that val will take.
 
   @return Color from value.
-  */
+*/
 Color Cube::colorMap(float val, float min, float max)
 {
   const float range = 1024;
@@ -294,7 +354,7 @@ Color Cube::colorMap(float val, float min, float max)
   @param max Maximum value that val will take.
 
   @return Color between colors a and b.
-  */
+*/
 Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 {
   int red = a.red + (b.red-a.red) * (val-min) / (max-min);
@@ -306,7 +366,7 @@ Color Cube::lerpColor(Color a, Color b, int val, int min, int max)
 
 /** Make changes to the cube visible.
   Causes pixel data to be written to the LED strips.
-  */
+*/
 void Cube::show()
 {
   strip.show();

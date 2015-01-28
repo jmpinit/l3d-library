@@ -21,7 +21,7 @@ void loop()
   t++;
 
   float slow_t = (float) t / 32;
-  cube.sphere(4 + 3*cos(slow_t), 4 + 3*sin(slow_t), 4 + 3*sin(slow_t), 2, red);
+  cube.shell(4 + 3*cos(slow_t), 4 + 3*sin(slow_t), 4 + 3*sin(slow_t), 3, red);
   cube.line(0, 0, 0, 7, 7, 7, opposite);
 
   if(t / 16 % 2 == 0) {
