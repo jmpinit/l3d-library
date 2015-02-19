@@ -67,7 +67,7 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 #endif
 
 #define SIZE(array) (sizeof(array) / sizeof(*array))
-#define MAX_CLIETNS 1
+#define MAX_CLIENTS 1
 
 #ifdef HB_INTERVAL_SHORT
 #define HB_INTERVAL 1000
@@ -115,7 +115,7 @@ class SparkWebSocketServer {
     /**
      * pointer to connected clients
      */
-    TCPClient *clients[MAX_CLIETNS];
+    TCPClient *clients[MAX_CLIENTS];
     void disconnectAll();
     unsigned long _startMillis;
 
@@ -143,8 +143,5 @@ class SparkWebSocketServer {
     TCPServer *server;
     long previousMillis ;        // will store last time LED was updated
 };
-
-
-
 
 #endif
