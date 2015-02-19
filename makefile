@@ -11,7 +11,9 @@ EXAMPLES = $(wildcard $(EXAMPLE_DIR)*.cpp)
 EXAMPLE_BINS = $(addprefix $(BUILD_DIR),$(notdir $(patsubst %.cpp,%.bin,$(EXAMPLES))))
 
 SOURCES = firmware/l3d-cube.cpp \
-					firmware/neopixel.cpp
+	  firmware/neopixel.cpp \
+	  firmware/SparkWebSocketServer.cpp \
+	  firmware/Base64.cpp
 
 export INCLUDE_DIRS = $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME) $$(LIB_CORE_LIBRARIES_PATH)$(LIB_NAME)/$(LIB_NAME)
 
