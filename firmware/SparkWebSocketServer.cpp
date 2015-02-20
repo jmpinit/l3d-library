@@ -45,8 +45,10 @@
 #include "Base64.h"
 #include "tropicssl/sha1.h"
 
+#define DEBUG_WS // FIXME
+
 #ifdef SUPPORT_HIXIE_76
-#include "MD5.c"
+#include "MD5.cpp"
 #endif
 
 SparkWebSocketServer::SparkWebSocketServer(TCPServer &tcpServer)
@@ -59,13 +61,23 @@ SparkWebSocketServer::SparkWebSocketServer(TCPServer &tcpServer)
     previousMillis = 0;
 }
 
+TCPClient** SparkWebSocketServer::getFreeClientSlot()
+{
+    for(int i = 0; i < MAX_CLIENTS; i++) {
+        if(clients[i] == NULL)
+            return &clients[i];
+    }
+
+    return NULL;
+}
+
 bool SparkWebSocketServer::handshake(TCPClient &client)
 {
     uint8_t pos = 0;
     bool found = false;
 
     // look for a prior connection from this client
-    for(pos = 0; pos < MAX_CLIENTS; pos++) {
+    /*for(pos = 0; pos < MAX_CLIENTS; pos++) {
         if(clients[pos] != NULL && client.equals(*clients[pos])) {
 #ifdef DEBUG_WS
             String ip;
@@ -80,7 +92,7 @@ bool SparkWebSocketServer::handshake(TCPClient &client)
             found = true;
             break;
         }
-    }
+    }*/
 
     if(!found) {
         // find an unused slot
@@ -104,7 +116,7 @@ bool SparkWebSocketServer::handshake(TCPClient &client)
         // check request and look for websocket handshake
 #ifdef DEBUG_WS
         String ip;
-        client.getIP(ip);
+        //client.getIP(ip);
         Serial.print(" SparkWebSocketServer::handshake, client[");
         Serial.print(pos);
         Serial.print("]: ");
@@ -117,9 +129,13 @@ bool SparkWebSocketServer::handshake(TCPClient &client)
             clients[pos] = &client;
 #ifdef DEBUG_WS
             String ip;
-            client.getIP(ip);
+            //client.getIP(ip);
             Serial.print("SparkWebSocketServer established, ");
             Serial.println(ip);
+            if(clients[pos]->connected())
+                Serial.println("and client still connected.");
+            else
+                Serial.println("but client disconnected!");
 #endif
             return true;
         } else {
@@ -137,7 +153,7 @@ void SparkWebSocketServer::disconnectClient(TCPClient &client)
 #ifdef DEBUG_WS
     Serial.print("Terminating TCPClient: ");
     String ip;
-    client.getIP(ip);
+    //client.getIP(ip);
     Serial.println(ip);
 #endif
 
@@ -159,10 +175,10 @@ void SparkWebSocketServer::disconnectClient(TCPClient &client)
 
     // remove client from the list
     for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
-        if(clients[i] != NULL && client.equals(*clients[i])) {
+        if(clients[i] != NULL && client == *clients[i]) {
 #ifdef DEBUG_WS
             String ip;
-            client.getIP(ip);
+            //client.getIP(ip);
             Serial.print("found: ");
             Serial.print(ip);
             Serial.println(" and removing it from the list of the clients");
@@ -331,17 +347,52 @@ void SparkWebSocketServer::doIt()
         previousMillis = currentMillis;
     }
 
-    TCPClient *client = server->available();
+    /*Serial.println("Trying...");
+    delay(500);
+    TCPClient** clientSlot = clients;//getFreeClientSlot();
+    Serial.println("1");
+    delay(500);
+    *clientSlot = server->available();
+    Serial.println("2");
+    delay(500);
+    TCPClient* client = *clientSlot;
 
-    if(client && client->connected()) {
+    Serial.println("Survived");
+    delay(500);*/
+
+    static int count = 0; // FIXME
+
+    Serial.print(count);
+    Serial.print(" ) ");
+    if(clients[0] == NULL || !clients[0]->connected()) {
+        Serial.println("NOT CONNECTED");
+    } else {
+        Serial.println("CONNECTED");
+    }
+
+    TCPClient* client = new TCPClient(MAX_SOCK_NUM);
+    if(clients[0] == NULL || !clients[0]->connected()) {
+        Serial.println("checking...");
+        *client = server->available();
+        Serial.println("done check");
+    }
+
+    if(client != NULL && client->connected()) {
 #ifdef DEBUG_WS
         String ip;
-        client->getIP(ip);
-        Serial.print("new client connecting, testing: ");
+        //client.getIP(ip);
+        Serial.print(count);
+        Serial.print(") new client connecting, testing: ");
         Serial.println(ip);
 #endif
         // attempt to initiate connection
-        handshake(*client);
+        bool success = handshake(*client);
+
+        if(success) {
+            Serial.println("handshake successful");
+        } else {
+            Serial.println("handshake FAILED");
+        }
     }
 
     for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
@@ -352,8 +403,9 @@ void SparkWebSocketServer::doIt()
         if(!myClient->connected()) {
 #ifdef DEBUG_WS
             String ip;
-            myClient->getIP(ip);
-            Serial.print("Client[");
+            //myClient->getIP(ip);
+            Serial.print(count);
+            Serial.print(") Client[");
             Serial.print(i);
             Serial.print("]: ");
             Serial.print(ip);
@@ -361,15 +413,17 @@ void SparkWebSocketServer::doIt()
 #endif
             disconnectClient(*myClient);
         } else {
+            sendData("hi!", *myClient); // FIXME
+            Serial.println("said hi!");
             String req;
             getData(req, *myClient);
 
             if(req.length() > 0) {
 #ifdef DEBUG_WS
                 String ip;
-                myClient->getIP(ip);
+                //myClient->getIP(ip);
                 Serial.print("got : ");
-                Serial.print(test+" from: ");
+                Serial.print(req + " from: ");
                 Serial.println(ip);
                 delay(1000);
 #endif
@@ -381,22 +435,31 @@ void SparkWebSocketServer::doIt()
 #endif
                 sendData(result, *myClient);
             } else {
+                Serial.println("Request length zero."); // FIXME
+
                 if(beat) {
+                    Serial.println("beat");
+
                     if(myClient->connected()) {
 #ifdef DEBUG_WS
                         String ip;
-                        myClient->getIP(ip);
+                        //myClient->getIP(ip);
                         Serial.print("sending HB to: ");
                         Serial.println(ip);
 #endif
                         sendData("HB", *myClient);
                     } else {
+#ifdef DEBUG_WS
+                        Serial.println("client found disconnected in beat.");
+#endif
                         disconnectClient(*myClient);
                     }
                 }
             }
         }
     }
+
+    count++;
 }
 
 /** Analyze request and respond if it is for a Websocket connection.
@@ -533,7 +596,7 @@ bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
 
         if (!hixie76style && newKey.length() > 0) {
 #ifdef DEBUG_WS
-            Serial.print("!hixie76style: " + newKey);
+            Serial.println("!hixie76style: " + newKey);
 #endif
             // add the magic string
             newKey += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";

@@ -44,6 +44,7 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 #ifndef _SPARK_WEB_SOCKET_H_
 #define _SPARK_WEB_SOCKET_H_
 
+
 #include "application.h"
 #include "spark_utilities.h"
 // CRLF characters to terminate lines/handshakes in headers.
@@ -112,6 +113,8 @@ class SparkWebSocketServer {
     CallBack cBack;
     void notify(String &str);
   private:
+    TCPClient** getFreeClientSlot();
+
     /**
      * pointer to connected clients
      */
@@ -127,7 +130,7 @@ class SparkWebSocketServer {
 
     // Discovers if the client's header is requesting an upgrade to a
     // websocket connection.
-    bool analyzeRequest(int bufferLength, TCPClient &client);
+    bool analyzeRequest(TCPClient &client);
 
 #ifdef SUPPORT_HIXIE_76
     void handleHixie76Stream(String &data, TCPClient &client);

@@ -1,9 +1,12 @@
 #include <math.h>
 
 #include "SparkWebSocketServer.h"
-SYSTEM_MODE(SEMI_AUTOMATIC);
 
 #include "l3d-cube/l3d-cube.h"
+
+void debug_output_(const char* msg) {
+    Serial.print(msg);
+}
 
 TCPServer server = TCPServer(2525);
 //Cube cube = Cube();
@@ -15,12 +18,14 @@ SparkWebSocketServer mine(server);
 char ipString[24];
 void setup()
 {
+    Spark.disconnect();
+
     CallBack cb = &handle;
     mine.setCallBack(cb);
 
     Serial.begin(9600);
 
-    Spark.connect();
+    //Spark.connect();
 
     // run some test code so we know the core is running!
     RGB.control(true);
@@ -44,7 +49,7 @@ void setup()
     RGB.color(0, 0, 0);
     RGB.control(false);
 
-    netapp_ipconfig(&ip_config);
+    //netapp_ipconfig(&ip_config);
     server.begin();
 
     Serial.println(WiFi.localIP());
@@ -55,7 +60,7 @@ void setup()
     IPAddress ip = WiFi.localIP();
     sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
-    Spark.variable("ip", &ipString, STRING);
+    //Spark.variable("ip", &ipString, STRING);
 
     //cube.begin();
     //cube.background(black);
@@ -94,5 +99,5 @@ void loop()
     mine.doIt();
     //cube.show();
 
-    delay(1000);
+    delay(100);
 }
