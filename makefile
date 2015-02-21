@@ -26,7 +26,7 @@ $(EXAMPLE_BINS): $(BUILD_DIR)%.bin : $(EXAMPLE_DIR)%.cpp $(SOURCES) | $(BUILD_DI
 	-rm -r $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	mkdir -p $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	cp -r $(SRC_DIR) $(FIRMWARE_DIR)libraries/$(LIB_NAME)/$(LIB_NAME)
-	cd $(FIRMWARE_DIR)build && $(MAKE) APP=$(EXAMPLE_NAME) DEBUG_BUILD=y
+	cd $(FIRMWARE_DIR)build && $(MAKE) APP=$(EXAMPLE_NAME)
 	cp $(FIRMWARE_DIR)build/applications/$(EXAMPLE_NAME)/$(EXAMPLE_NAME).bin $@
 
 $(BUILD_DIR):

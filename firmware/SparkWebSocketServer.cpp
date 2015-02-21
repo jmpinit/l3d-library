@@ -51,6 +51,8 @@
 #include "MD5.cpp"
 #endif
 
+static TCPClient* blankClient = new TCPClient(MAX_SOCK_NUM);
+
 SparkWebSocketServer::SparkWebSocketServer(TCPServer &tcpServer)
 {
     for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
@@ -347,51 +349,36 @@ void SparkWebSocketServer::doIt()
         previousMillis = currentMillis;
     }
 
-    /*Serial.println("Trying...");
-    delay(500);
-    TCPClient** clientSlot = clients;//getFreeClientSlot();
-    Serial.println("1");
-    delay(500);
-    *clientSlot = server->available();
-    Serial.println("2");
-    delay(500);
-    TCPClient* client = *clientSlot;
-
-    Serial.println("Survived");
-    delay(500);*/
-
     static int count = 0; // FIXME
 
-    Serial.print(count);
+    /*Serial.print(count);
     Serial.print(" ) ");
     if(clients[0] == NULL || !clients[0]->connected()) {
         Serial.println("NOT CONNECTED");
     } else {
         Serial.println("CONNECTED");
-    }
+    }*/
 
-    TCPClient* client = new TCPClient(MAX_SOCK_NUM);
+    TCPClient* client = blankClient;
     if(clients[0] == NULL || !clients[0]->connected()) {
-        Serial.println("checking...");
         *client = server->available();
-        Serial.println("done check");
-    }
 
-    if(client != NULL && client->connected()) {
+        if(client != NULL && client->connected()) {
 #ifdef DEBUG_WS
-        String ip;
-        //client.getIP(ip);
-        Serial.print(count);
-        Serial.print(") new client connecting, testing: ");
-        Serial.println(ip);
+            String ip;
+            //client.getIP(ip);
+            Serial.print(count);
+            Serial.print(") new client connecting, testing: ");
+            Serial.println(ip);
 #endif
-        // attempt to initiate connection
-        bool success = handshake(*client);
+            // attempt to initiate connection
+            bool success = handshake(*client);
 
-        if(success) {
-            Serial.println("handshake successful");
-        } else {
-            Serial.println("handshake FAILED");
+            if(success) {
+                Serial.println("handshake successful");
+            } else {
+                Serial.println("handshake FAILED");
+            }
         }
     }
 
@@ -413,8 +400,6 @@ void SparkWebSocketServer::doIt()
 #endif
             disconnectClient(*myClient);
         } else {
-            sendData("hi!", *myClient); // FIXME
-            Serial.println("said hi!");
             String req;
             getData(req, *myClient);
 
@@ -435,8 +420,6 @@ void SparkWebSocketServer::doIt()
 #endif
                 sendData(result, *myClient);
             } else {
-                Serial.println("Request length zero."); // FIXME
-
                 if(beat) {
                     Serial.println("beat");
 
@@ -447,6 +430,7 @@ void SparkWebSocketServer::doIt()
                         Serial.print("sending HB to: ");
                         Serial.println(ip);
 #endif
+                        // TODO can this be removed?
                         sendData("HB", *myClient);
                     } else {
 #ifdef DEBUG_WS
