@@ -13,6 +13,8 @@
     <p>IP Address: </p><p id="ip"></p>
 
     <script type="text/javascript">
+        rate = 1000;
+
         $("#connect").on("click", function() {
             var deviceID = $("#device").val();
             var token = $("#token").val();
@@ -43,7 +45,7 @@
                     console.log("Connected");
                     $("#status").text("Connected");
 
-                    setInterval(function() {
+                    function refresh() {
                         var frameBuffer = new ArrayBuffer(512);
                         var frameView = new Uint8Array(frameBuffer);
 
@@ -52,7 +54,11 @@
 
                         ws.send(frameBuffer);
                         console.log("sent frame");
-                    }, 1000);
+
+                        setTimeout(refresh, rate);
+                    }
+
+                    refresh();
                 };
             }
         });
