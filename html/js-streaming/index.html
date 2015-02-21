@@ -1,0 +1,61 @@
+<!DOCTYPE html lang="en">
+<html>
+<head>
+    <title>L3D Cube JS Streaming</title>
+    <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="js/streaming.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Status: </h1><h2 id="status">disconnected</h2>
+    <p>Device ID:</p><input id="device"></input>
+    <p>Access token:</p><input type="password" id="token"></input>
+    <button id="connect">Connect</button>
+    <p>IP Address: </p><p id="ip"></p>
+
+    <script type="text/javascript">
+        $("#connect").on("click", function() {
+            var deviceID = $("#device").val();
+            var token = $("#token").val();
+            var port = 2525;
+
+            if(token != "") {
+                $.get("https://api.spark.io/v1/devices/" + deviceID + "/ip?access_token=" + token, function(data) {
+                    var ip = data["result"];
+                    $("#ip").text(ip);
+                    ws = connect("ws://" + ip + ":" + port);
+
+                    ws.onopen = function() {
+                        console.log("Connected");
+                        $("#status").text("Connected");
+
+                        setInterval(function() {
+                            var frame = new ArrayBuffer(512);
+                            ws.send(frame);
+                            console.log("sent frame");
+                        }, 1000);
+                    };
+                });
+            } else {
+                var ip = "192.168.1.9";
+                ws = connect("ws://" + ip + ":" + port);
+
+                ws.onopen = function() {
+                    console.log("Connected");
+                    $("#status").text("Connected");
+
+                    setInterval(function() {
+                        var frameBuffer = new ArrayBuffer(512);
+                        var frameView = new Uint8Array(frameBuffer);
+
+                        for(var i=0; i < frameView.length; i++)
+                            frameView[i] = Math.floor(Math.random()*256);
+
+                        ws.send(frameBuffer);
+                        console.log("sent frame");
+                    }, 1000);
+                };
+            }
+        });
+    </script>
+</body>
+</html>

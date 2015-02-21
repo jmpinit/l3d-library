@@ -407,10 +407,9 @@ void SparkWebSocketServer::doIt()
 #ifdef DEBUG_WS
                 String ip;
                 //myClient->getIP(ip);
-                Serial.print("got : ");
+                /*Serial.print("got : ");
                 Serial.print(req + " from: ");
-                Serial.println(ip);
-                delay(1000);
+                Serial.println(ip);*/
 #endif
                 String result;
                 (*cBack)(req, result);
