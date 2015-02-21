@@ -45,8 +45,6 @@
 #include "Base64.h"
 #include "tropicssl/sha1.h"
 
-#define DEBUG_WS // FIXME
-
 #ifdef SUPPORT_HIXIE_76
 #include "MD5.cpp"
 #endif
@@ -407,9 +405,9 @@ void SparkWebSocketServer::doIt()
 #ifdef DEBUG_WS
                 String ip;
                 //myClient->getIP(ip);
-                /*Serial.print("got : ");
+                Serial.print("got : ");
                 Serial.print(req + " from: ");
-                Serial.println(ip);*/
+                Serial.println(ip);
 #endif
                 String result;
                 (*cBack)(req, result);

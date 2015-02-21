@@ -76,8 +76,8 @@ void setup()
  */
 void handle(String &data, String &result)
 {
-    Serial.print("in handle, got: ");
-    Serial.println(data.length());
+    //Serial.print("in handle, got: ");
+    //Serial.println(data.length());
 
     if(data.length() == 512) {
         for(unsigned int x = 0; x < 8; x++) {
@@ -89,8 +89,6 @@ void handle(String &data, String &result)
                     uint8_t green = (data[index]&0x1C)<<1;
                     uint8_t blue = (data[index]&0x03)<<4;
                     Color pixelColor = Color(red, green, blue);
-                    Serial.print((int)data[index]);
-                    Serial.print(", ");
                     cube.setVoxel(x, y, z, pixelColor);
                 }
             }
@@ -103,5 +101,4 @@ void handle(String &data, String &result)
 void loop()
 {
     mine.doIt();
-    delay(100);
 }
