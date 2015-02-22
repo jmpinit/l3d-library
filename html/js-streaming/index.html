@@ -13,6 +13,7 @@
     <p>IP Address: </p><p id="ip"></p>
 
     <script type="text/javascript">
+        var clearToSend = true;
         rate = 1000;
 
         $("#connect").on("click", function() {
@@ -41,21 +42,40 @@
                 var ip = "192.168.1.9";
                 ws = connect("ws://" + ip + ":" + port);
 
+                ws.onmessage = function(evt) {
+                    var msg = evt.data;
+                    console.log("got msg: " + msg);
+
+                    if(parseInt(msg) == 512) {
+                        clearToSend = true;
+                    } else {
+                        if(!clearToSend) {
+                            setTimeout(function() { clearToSend = true; }, 1000);
+                        }
+                    }
+                };
+
                 ws.onopen = function() {
                     console.log("Connected");
                     $("#status").text("Connected");
 
                     function refresh() {
-                        var frameBuffer = new ArrayBuffer(512);
-                        var frameView = new Uint8Array(frameBuffer);
+                        if(clearToSend) {
+                            var frameBuffer = new ArrayBuffer(512);
+                            var frameView = new Uint8Array(frameBuffer);
 
-                        for(var i=0; i < frameView.length; i++)
-                            frameView[i] = Math.floor(Math.random()*256);
+                            for(var i=0; i < frameView.length; i++)
+                                frameView[i] = Math.floor(Math.random()*256);
 
-                        ws.send(frameBuffer);
-                        console.log("sent frame");
+                            ws.send(frameBuffer);
+                            console.log("sent frame");
 
-                        setTimeout(refresh, rate);
+                            clearToSend = false;
+                            setTimeout(refresh, rate);
+                        } else {
+                            // check for readiness every 5 millis
+                            setTimeout(refresh, 5);
+                        }
                     }
 
                     refresh();

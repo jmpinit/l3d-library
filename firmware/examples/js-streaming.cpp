@@ -1,9 +1,11 @@
+#include <sstream>
 #include <math.h>
 
 #include "SparkWebSocketServer.h"
 
 #include "l3d-cube/l3d-cube.h"
 
+// TODO remove
 void debug_output_(const char* msg) {
     Serial.print(msg);
 }
@@ -23,7 +25,7 @@ void setup()
     CallBack cb = &handle;
     mine.setCallBack(cb);
 
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     //Spark.connect();
 
@@ -94,6 +96,8 @@ void handle(String &data, String &result)
             }
         }
     }
+
+    result += String(data.length());
 
     cube.show();
 }

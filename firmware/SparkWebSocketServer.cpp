@@ -417,7 +417,7 @@ void SparkWebSocketServer::doIt()
 #endif
                 sendData(result, *myClient);
             } else {
-                if(beat) {
+                if(false) {//beat) {
                     Serial.println("beat");
 
                     if(myClient->connected()) {

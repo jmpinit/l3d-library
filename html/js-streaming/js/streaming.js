@@ -5,11 +5,6 @@ function connect(address) {
         // open connection
         var ws = new WebSocket(address);
 
-        ws.onmessage = function(evt) {
-            var received_msg = evt.data;
-            console.log("got msg: " + received_msg);
-        };
-
         ws.onclose = function() {
             console.log("Disconnected.");
         };
