@@ -1,0 +1,67 @@
+<!DOCTYPE html lang="en">
+<html>
+<head>
+    <title>L3D Cube JS Streaming</title>
+    <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="js/l3dcube.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Status: </h1><h2 id="status">disconnected</h2>
+    <button id="connect">Connect</button>
+
+    <p id="x"></p>
+    <p id="y"></p>
+    <p id="z"></p>
+
+    <script type="text/javascript">
+        if(!("WebSocket" in window)) {
+            alert("WebSocket NOT supported by your Browser!");
+        }
+
+        var ax = 0;
+        var ay = 0;
+        var az = 0;
+
+        window.ondevicemotion = function(e) {
+            var scale = 15;
+
+            ax = 128 + scale * e.accelerationIncludingGravity.x;
+            ay = 128 + scale * e.accelerationIncludingGravity.y;
+            az = 128 + scale * e.accelerationIncludingGravity.z;
+
+            $("#x").text(ax);
+            $("#y").text(ay);
+            $("#z").text(az);
+        }
+
+        function connect(address) {
+            console.log("connecting to", address);
+            cube = new Cube(address);
+            cube.rate = 16;
+
+            cube.onrefresh = function(cube) {
+                cube.background(ax, ay, az);
+            }
+
+            cube.onopen = function(cube) {
+                console.log("Connected!");
+                $("#status").text("Connected");
+            }
+
+            cube.onclose = function(cube) {
+                console.log("Disconnected.");
+            }
+        }
+
+        $("#connect").on("click", function() {
+            var deviceID = $("#device").val();
+            var token = $("#token").val();
+            var port = 2525;
+
+            var ip = "192.168.1.9";
+            var address = "ws://" + ip + ":" + port;
+            connect(address);
+        });
+    </script>
+</body>
+</html>
