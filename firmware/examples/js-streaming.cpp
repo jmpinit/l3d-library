@@ -25,28 +25,6 @@ void setup()
     Spark.connect();
     Spark.variable("ip", &ipString, STRING);
 
-    // run some test code so we know the core is running!
-    RGB.control(true);
-    bool s = false;
-
-    while(!Serial.available()) {
-        s = !s; // toggle the state
-        RGB.brightness(10);
-
-        if(s) {
-            RGB.color(0,0,255);
-            delay(500);
-        } else {
-            RGB.color(0,255,0);
-            delay(200);
-            RGB.color(255,0,255);
-            delay(300);
-        }
-    }
-
-    RGB.color(0, 0, 0);
-    RGB.control(false);
-
     server.begin();
 
     Serial.println(WiFi.localIP());
