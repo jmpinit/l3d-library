@@ -1,0 +1,97 @@
+<!DOCTYPE html lang="en">
+<html>
+<head>
+    <title>latency graph</title>
+    <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="js/l3dcube.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Status: </h1><h2 id="status">disconnected</h2>
+    <button id="connect">Connect</button>
+    <br>
+    <canvas id="latency"></canvas>
+    <p id="average"></p>
+
+    <script type="text/javascript">
+        if(!("WebSocket" in window)) {
+            alert("WebSocket NOT supported by your Browser!");
+        }
+
+        function millis() {
+            return +new Date();
+        }
+
+        var last = millis();
+        var historySize = 320; // how many latency values to graph
+
+        var latency = [];
+        for(var i=0; i < historySize; i++) {
+            latency[i] = 0;
+        }
+
+        var canvas = $("#latency")[0];
+        canvas.width = historySize;
+        canvas.height = 240;
+
+        function graphLatency() {
+            var ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for(var i = 0; i < latency.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i, canvas.height);
+                ctx.lineTo(i, canvas.height-latency[i]);
+                ctx.stroke();
+            }
+        }
+
+        function averageLatency() {
+            var sum = 0;
+
+            for(var i = 0; i < latency.length; i++) {
+                sum += latency[i];
+            }
+
+            $("#average").text(sum / latency.length);
+        }
+
+        function connect(address) {
+            console.log("connecting to", address);
+            cube = new Cube(address);
+            cube.rate = 5;
+
+            cube.onrefresh = function(cube) {
+                for(var i = historySize-1; i >= 1; i--) {
+                    latency[i] = latency[i-1];
+                }
+                latency[0] = millis() - last;
+
+                graphLatency();
+                averageLatency();
+
+                last = millis();
+            }
+
+            cube.onopen = function(cube) {
+                console.log("Connected!");
+                $("#status").text("Connected");
+            }
+
+            cube.onclose = function(cube) {
+                console.log("Disconnected.");
+            }
+        }
+
+        $("#connect").on("click", function() {
+            var deviceID = $("#device").val();
+            var token = $("#token").val();
+            var port = 2525;
+
+            var ip = "192.168.1.9";
+            var address = "ws://" + ip + ":" + port;
+            connect(address);
+        });
+    </script>
+</body>
+</html>
