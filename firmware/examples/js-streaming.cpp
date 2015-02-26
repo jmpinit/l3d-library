@@ -20,14 +20,15 @@ SparkWebSocketServer mine(server);
 char ipString[24];
 void setup()
 {
-    Spark.disconnect();
-
     CallBack cb = &handle;
     mine.setCallBack(cb);
 
     Serial.begin(115200);
 
-    //Spark.connect();
+    IPAddress ip = WiFi.localIP();
+    sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    Spark.connect();
+    Spark.variable("ip", &ipString, STRING);
 
     // run some test code so we know the core is running!
     RGB.control(true);
@@ -58,11 +59,6 @@ void setup()
     Serial.println(WiFi.subnetMask());
     Serial.println(WiFi.gatewayIP());
     Serial.println(WiFi.SSID());
-
-    IPAddress ip = WiFi.localIP();
-    sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-
-    //Spark.variable("ip", &ipString, STRING);
 
     cube.begin();
     cube.background(black);
