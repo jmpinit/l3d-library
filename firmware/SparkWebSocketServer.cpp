@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Websocket-Arduino, a websocket implementation for Arduino
- * Copyright 2014 NaAl (h20@alocreative.com)
  * Based on previous implementations by
+ * Copyright 2014 NaAl (h20@alocreative.com)
+ * and
  * Copyright 2011 Per Ejeklint
  * and
  * Copyright 2010 Ben Swanson
