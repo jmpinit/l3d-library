@@ -13,8 +13,9 @@ function Cube(address) {
     this.clearToSend = true;
     this.rate = 1000;
     this.size = 8; // TODO support 16^3
+    this.frameSize = 512;
 
-    this.frameBuffer = new ArrayBuffer(512);
+    this.frameBuffer = new ArrayBuffer(this.frameSize);
 
     // open connection
     this.ws = new WebSocket(address);
@@ -40,7 +41,7 @@ function Cube(address) {
         var msg = evt.data;
         console.log("got msg: " + msg);
 
-        if(parseInt(msg) == 512) {
+        if(parseInt(msg) == this.frameSize) {
             cube.clearToSend = true;
         } else {
             if(!this.clearToSend) {
