@@ -40,7 +40,19 @@
             cube.rate = 16;
 
             cube.onrefresh = function(cube) {
-                cube.background(ax, ay, az);
+                cube.background(0, 0, 0);
+                
+                for(var z=0; z < 8; z++) {
+                    for(var y=0; y < 8; y++) {
+                        for(var x=0; x < 8; x++) {
+                            var r = x < ax >> 5 ? ax : 0;
+                            var g = y < ay >> 5 ? ay : 0;
+                            var b = z < az >> 5 ? az : 0;
+
+                            cube.setVoxel(x, y, z, r, g, b);
+                        }
+                    }
+                }
             }
 
             cube.onopen = function(cube) {
