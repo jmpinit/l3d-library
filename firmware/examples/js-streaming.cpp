@@ -5,11 +5,6 @@
 
 #include "l3d-cube/l3d-cube.h"
 
-// TODO remove
-void debug_output_(const char* msg) {
-    Serial.print(msg);
-}
-
 TCPServer server = TCPServer(2525);
 Cube cube = Cube();
 
@@ -52,7 +47,6 @@ void setup()
     RGB.color(0, 0, 0);
     RGB.control(false);
 
-    //netapp_ipconfig(&ip_config);
     server.begin();
 
     Serial.println(WiFi.localIP());
@@ -67,10 +61,9 @@ void setup()
 }
 
 /**
- * check the cmd (client request), do what needs to be done and store the result
- * int the result
- * @param cmd  client request
- * @param result the string to be send back to the client
+ * Handle client requests and reply.
+ * @param data string from client
+ * @param result string to client
  */
 void handle(String &data, String &result)
 {
