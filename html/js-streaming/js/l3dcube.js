@@ -250,13 +250,13 @@ Cube.prototype = {
     onrefresh: function() {},
 
     refresh: function() {
-        if(this.onrefresh !== undefined) {
-            this.onrefresh(this);
-        }
-        
         var cube = this;
 
         if(this.clearToSend) {
+            if(this.onrefresh !== undefined) {
+                this.onrefresh(this);
+            }
+        
             this.ws.send(this.frameBuffer);
             this.clearToSend = false;
 
