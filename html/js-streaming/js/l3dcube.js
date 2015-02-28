@@ -97,7 +97,7 @@ Cube.prototype = {
             if(this.onrefresh !== undefined) {
                 this.onrefresh(this);
             }
-        
+
             this.ws.send(this.frameBuffer);
             this.clearToSend = false;
 

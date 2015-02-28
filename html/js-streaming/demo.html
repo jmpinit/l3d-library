@@ -1,16 +1,45 @@
 <!DOCTYPE html lang="en">
 <html>
 <head>
-    <title>L3D Cube JS Streaming</title>
+    <title>L3D Cube: WebSocket Streaming Demo</title>
     <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
     <script src="js/l3dcube.js" type="text/javascript"></script>
 </head>
 <body>
-    <h1>Status: </h1><h2 id="status">disconnected</h2>
-    <p>Device ID:</p><input id="device"></input>
-    <p>Access token:</p><input type="password" id="token"></input>
+    <h1>Streaming Demo</h1>
+
+    <p>This is a demonstration of streaming graphics
+        to an L3D Cube via a WebSocket connection.</p>
+
+    <p>Compile and flash the <i>js-streaming.cpp</i> example to your core and make
+        sure that it is connected to WiFi.</p>
+
+    <p>Then enter the info below and hit "Connect" to begin the demo!</p>
+
+    <hr>
+
+    <table>
+        <tr>
+            <td><p>Cube Name:</p></td>
+            <td><input id="device"></input></td>
+        </tr>
+        <tr>
+            <td><p>API Access Token:</p></td>
+            <td><input type="password" id="token"></input></td>
+        </tr>
+        <tr>
+            <td><p>Discovered IP Address: </p></td>
+            <td><p id="ip"></p></td>
+        </tr>
+        <tr>
+            <td><p>Connection Status: </p></td>
+            <td><b id="status">Disconnected</b></td>
+        </tr>
+    </table>
+
+    <hr>
+
     <button id="connect">Connect</button>
-    <p>IP Address: </p><p id="ip"></p>
 
     <script type="text/javascript">
         if(!("WebSocket" in window))

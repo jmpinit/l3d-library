@@ -1,16 +1,22 @@
 <!DOCTYPE html lang="en">
 <html>
 <head>
-    <title>latency graph</title>
+    <title>Latency Measurement</title>
     <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
     <script src="js/l3dcube.js" type="text/javascript"></script>
 </head>
 <body>
-    <h1>Status: </h1><h2 id="status">disconnected</h2>
-    <button id="connect">Connect</button>
-    <br>
-    <canvas id="latency"></canvas>
-    <p id="average"></p>
+    <h1>Latency Measurement</h1>
+    <table>
+        <tr><td>Cube IP:</td><td><input type="text" id="ip"></input></td>
+        <td><button id="connect">Connect</button></td></tr>
+        <tr><td>Status:</td><td id="status">Disconnected</td></tr>
+    </table>
+
+    <canvas id="latency" style="border: solid;"></canvas>
+    <table>
+        <tr><td>average latency (ms):</td><td><p id="average"></p></td></tr>
+    </table>
 
     <script type="text/javascript">
         if(!("WebSocket" in window)) {
@@ -80,6 +86,7 @@
 
             cube.onclose = function(cube) {
                 console.log("Disconnected.");
+                $("#status").text("Disconnected");
             }
         }
 
@@ -88,9 +95,15 @@
             var token = $("#token").val();
             var port = 2525;
 
-            var ip = "192.168.1.9";
-            var address = "ws://" + ip + ":" + port;
-            connect(address);
+            var ip = $("#ip").val();
+
+            if(ip != "") {
+                var address = "ws://" + ip + ":" + port;
+                connect(address);
+                $("#status").text("Connecting...");
+            } else {
+                alert("Please enter the IP address of the cube.");
+            }
         });
     </script>
 </body>

@@ -6,12 +6,23 @@
     <script src="js/l3dcube.js" type="text/javascript"></script>
 </head>
 <body>
-    <h1>Status: </h1><h2 id="status">disconnected</h2>
-    <button id="connect">Connect</button>
+    <h1>Accelerometer Data Visualization</h1>
 
-    <p id="x"></p>
-    <p id="y"></p>
-    <p id="z"></p>
+    <p>You need a phone with a browser that supports device motion events for this demo to work.</p>
+
+    <table border="1" cellspacing="0">
+        <tr><td>x:</td><td id="x"></td></tr>
+        <tr><td>y:</td><td id="y"></td></tr>
+        <tr><td>z:</td><td id="z"></td></tr>
+    </table>
+
+</br>
+
+    <table>
+        <tr><td>Cube IP:</td><td><input type="text" id="ip"></input></td>
+        <td><button id="connect">Connect</button></td></tr>
+        <tr><td>Status:</td><td id="status">Disconnected</td></tr>
+    </table>
 
     <script type="text/javascript">
         if(!("WebSocket" in window)) {
@@ -41,7 +52,7 @@
 
             cube.onrefresh = function(cube) {
                 cube.background(0, 0, 0);
-                
+
                 for(var z=0; z < 8; z++) {
                     for(var y=0; y < 8; y++) {
                         for(var x=0; x < 8; x++) {
@@ -62,6 +73,7 @@
 
             cube.onclose = function(cube) {
                 console.log("Disconnected.");
+                $("#status").text("Disconnected");
             }
         }
 
@@ -70,9 +82,21 @@
             var token = $("#token").val();
             var port = 2525;
 
-            var ip = "192.168.1.9";
-            var address = "ws://" + ip + ":" + port;
-            connect(address);
+            var ip = $("#ip").val();
+
+            if(ip != "") {
+                var address = "ws://" + ip + ":" + port;
+                console.log("Connecting to", address);
+                $("#status").text("Connecting...");
+
+                try {
+                    connect(address);
+                } catch(err) {
+                    alert(err.message);
+                }
+            } else {
+                alert("Please enter the IP address of the cube.");
+            }
         });
     </script>
 </body>
