@@ -1,7 +1,7 @@
 Spark L3D Cube Library
 ======================
 
-# About
+## About
 
 This is the official library for use with the Spark Core in the [L3D Cube](http://l3dcube.com).
 
@@ -9,7 +9,7 @@ It provides 3D drawing functions for writing visual effects and utility function
 
 The API can be found in l3d-cube.h. Further documentation can be found on the [L3D Cube website](http://docs.l3dcube.com/).
 
-# Example Usage
+## Example Usage
 
 ```C++
 Cube cube = Cube(8, 50); // 8^3 cube with max brightness of 50
