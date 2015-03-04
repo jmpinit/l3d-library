@@ -20,7 +20,7 @@ cube.sphere(4, 4, 4, 3, Color(255, 0, 0)); // draw a red sphere in the center
 cube.show(); // update the LEDs to make the changes visible
 ```
 
-# Building Locally
+## Building Locally
 
 To compile a firmware binary using a local copy of the library:
 
