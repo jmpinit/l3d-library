@@ -358,6 +358,9 @@ void SparkWebSocketServer::doIt()
         Serial.println("CONNECTED");
     }*/
 
+    {
+    unsigned long startTime = micros();
+
     TCPClient* client = blankClient;
     if(clients[0] == NULL || !clients[0]->connected()) {
         *client = server->available();
@@ -381,6 +384,11 @@ void SparkWebSocketServer::doIt()
         }
     }
 
+    unsigned long endTime = micros();
+    Serial.print("a,");
+    Serial.println(endTime - startTime);
+    }
+
     for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
         TCPClient *myClient = clients[i];
 
@@ -400,7 +408,15 @@ void SparkWebSocketServer::doIt()
             disconnectClient(*myClient);
         } else {
             String req;
+            {
+                unsigned long startTime = micros();
+
             getData(req, *myClient);
+
+                unsigned long endTime = micros();
+                Serial.print("b,");
+                Serial.println(endTime - startTime);
+            }
 
             if(req.length() > 0) {
 #ifdef DEBUG_WS
@@ -411,12 +427,28 @@ void SparkWebSocketServer::doIt()
                 Serial.println(ip);
 #endif
                 String result;
+                {
+                    unsigned long startTime = micros();
+
                 (*cBack)(req, result);
+
+                    unsigned long endTime = micros();
+                    Serial.print("c,");
+                    Serial.println(endTime - startTime);
+                }
 #ifdef DEBUG_WS
                 Serial.print("result: ");
                 Serial.println(result);
 #endif
+                {
+                    unsigned long startTime = micros();
+
                 sendData(result, *myClient);
+
+                    unsigned long endTime = micros();
+                    Serial.print("d,");
+                    Serial.println(endTime - startTime);
+                }
             } else {
                 if(false) {//beat) {
                     Serial.println("beat");
@@ -442,6 +474,8 @@ void SparkWebSocketServer::doIt()
     }
 
     count++;
+
+    Serial.println("--");
 }
 
 /** Analyze request and respond if it is for a Websocket connection.

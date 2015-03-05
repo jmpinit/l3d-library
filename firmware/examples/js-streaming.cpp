@@ -20,6 +20,8 @@ void setup()
 
     Serial.begin(115200);
 
+    while(Serial.available() == 0);
+
     IPAddress ip = WiFi.localIP();
     sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     Spark.connect();
@@ -34,6 +36,12 @@ void setup()
 
     cube.begin();
     cube.background(black);
+
+    unsigned long startTime = micros();
+    Serial.println("X");
+    unsigned long endTime = micros();
+    Serial.print("serial: ");
+    Serial.println(endTime - startTime);
 
     Serial.println("Setup done");
 }
@@ -62,11 +70,11 @@ void handle(String &data, String &result)
                 }
             }
         }
+
+        cube.show();
     }
 
     result += String(data.length());
-
-    cube.show();
 }
 
 void loop()
