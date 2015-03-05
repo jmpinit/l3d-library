@@ -18,7 +18,7 @@ void setup()
     CallBack cb = &handle;
     mine.setCallBack(cb);
 
-    Serial.begin(115200);
+    Serial.begin(1000000);
 
     while(Serial.available() == 0);
 
