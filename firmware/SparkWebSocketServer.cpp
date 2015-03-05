@@ -256,7 +256,8 @@ void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
   */
 int SparkWebSocketServer::timedRead(TCPClient &client)
 {
-    uint8_t test = 0;
+    return client.read();
+    /*uint8_t test = 0;
 
     while (test < 20 && !client.available() && client.connected()) {
         delay(1);
@@ -267,7 +268,7 @@ int SparkWebSocketServer::timedRead(TCPClient &client)
         return client.read();
     }
 
-    return -1;
+    return -1;*/
 }
 
 /** Send a string to a client.
