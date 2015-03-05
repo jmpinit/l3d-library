@@ -31,9 +31,6 @@
         var historySize = 320; // how many latency values to graph
 
         var latency = [];
-        for(var i=0; i < historySize; i++) {
-            latency[i] = 0;
-        }
 
         var canvas = $("#latency")[0];
         canvas.width = historySize;
@@ -68,7 +65,10 @@
             cube.rate = 5;
 
             cube.onrefresh = function(cube) {
-                for(var i = historySize-1; i >= 1; i--) {
+                if(latency.length < historySize)
+                    latency.push(0);
+
+                for(var i = latency.length-1; i >= 1; i--) {
                     latency[i] = latency[i-1];
                 }
                 latency[0] = millis() - last;
