@@ -61,7 +61,7 @@ function lzwCompress(uncompressed) {
     "use strict";
 
     function arrayToString(arr) {
-        return arr.map(String.fromCharCode).join('');
+        return arr.join();
     }
 
     // build dictionary
@@ -95,13 +95,46 @@ function lzwCompress(uncompressed) {
         compressed.push(dictionary.get(arrayToString(word)));
     }
 
-    return Uint8Array.from(compressed);
+    return Uint16Array.from(compressed);
 }
 
 function lzwDecompress(compressed) {
     "use strict";
 
-    // TODO
+    // build dictionary
+
+    var dictionary = new Map();
+
+    for(var i = 0; i < 256; i++) {
+        dictionary.set(i, [dictionary.size]);
+    }
+
+    // decompress
+
+    var word = [compressed[0]];
+    var uncompressed = word;
+
+    for(var i = 1; i < compressed.length; i++) {
+        var k = compressed[i];
+
+        var entry;
+        if(dictionary.has(k)) {
+            entry = dictionary.get(k);
+        } else if(k === dictionary.size) {
+            entry = word.concat([word[0]]);
+        } else {
+            throw "Decompression failed. Invalid value.";
+        }
+
+        uncompressed = uncompressed.concat(entry);
+
+        var newEntry = word.concat([entry[0]]);
+        dictionary.set(dictionary.size, newEntry);
+
+        word = entry;
+    }
+
+    return Uint8Array.from(uncompressed);
 }
 
 Cube.prototype = {

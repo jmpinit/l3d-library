@@ -18,12 +18,16 @@
     <hr>
 
     <p>compressed frame:</p>
-    <p id="output"></p>
+    <p id="compressed"></p>
+    <hr>
+
+    <p>frame decompressed:</p>
+    <p id="uncompressed"></p>
     <hr>
 
     <table>
         <tr><td>input size</td><td id="in-size"></td></tr>
-        <tr><td>output size</td><td id="out-size"></td></tr>
+        <tr><td>compressed size</td><td id="compressed-size"></td></tr>
         <tr><td>compression ratio</td><td id="ratio"></td></tr>
     </table>
 
@@ -31,6 +35,13 @@
     <script type="text/javascript">
         Uint8Array.from = function(arr) {
             var buff = new Uint8Array(arr.length);
+            for(var i = 0; i < arr.length; i++)
+                buff[i] = arr[i];
+            return buff;
+        }
+
+        Uint16Array.from = function(arr) {
+            var buff = new Uint16Array(arr.length);
             for(var i = 0; i < arr.length; i++)
                 buff[i] = arr[i];
             return buff;
@@ -52,12 +63,15 @@
             values = collapse(this.values());
             return values.join(separator);
         }
+
+        Uint16Array.prototype.join = Uint8Array.prototype.join;
     </script>
 
     <script type="text/javascript">
         var frameSize = 512;
         var input;
-        var output;
+        var compressed;
+        var uncompressed;
 
         function randomInteger(max) {
             return Math.floor(Math.random() * max);
@@ -71,22 +85,29 @@
         function test() {
             var userFunction = eval($("#code").val());
 
-            input = userFunction || randomFrame(frameSize);
-            output = lzwCompress(input);
+            if(userFunction && typeof(userFunction) === "object") {
+                input = Uint8Array.from(userFunction);
+            } else {
+                input = randomFrame(frameSize);
+            }
+
+            compressed = lzwCompress(input);
+            uncompressed = lzwDecompress(compressed);
         }
 
         function display() {
             // display data
             
             $("#input").text(input.join(', '));
-            $("#output").text(output.join(', '));
+            $("#compressed").text(compressed.join(', '));
+            $("#uncompressed").text(uncompressed.join(', '));
 
             // display metrics
 
-            var ratio = input.length / output.length;
+            var ratio = input.byteLength / compressed.byteLength;
 
-            $("#in-size").text(input.length);
-            $("#out-size").text(output.length);
+            $("#in-size").text(input.byteLength);
+            $("#compressed-size").text(compressed.byteLength);
             $("#ratio").text(ratio);
         }
 
