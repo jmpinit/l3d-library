@@ -1,0 +1,106 @@
+<!DOCTYPE html lang="en">
+<html>
+<head>
+    <title>Compression Test</title>
+    <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="js/l3dcube.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Compression Test</h1>
+
+    <textarea id="code" rows=8 cols=64 placeholder="[1, 2, 3]"></textarea>
+
+    <br>
+    <button id="run">Run</button>
+
+    <p>input frame:</p>
+    <p id="input"></p>
+    <hr>
+
+    <p>compressed frame:</p>
+    <p id="output"></p>
+    <hr>
+
+    <table>
+        <tr><td>input size</td><td id="in-size"></td></tr>
+        <tr><td>output size</td><td id="out-size"></td></tr>
+        <tr><td>compression ratio</td><td id="ratio"></td></tr>
+    </table>
+
+    <!-- polyfill -->
+    <script type="text/javascript">
+        Uint8Array.from = function(arr) {
+            var buff = new Uint8Array(arr.length);
+            for(var i = 0; i < arr.length; i++)
+                buff[i] = arr[i];
+            return buff;
+        }
+
+        // iterator to array
+        function collapse(iterator, base) {
+            base = base || [];
+            var el = iterator.next();
+
+            if(el.done) {
+                return base;
+            } else {
+                return collapse(iterator, base.concat(el.value));
+            }
+        }
+
+        Uint8Array.prototype.join = function(separator) {
+            values = collapse(this.values());
+            return values.join(separator);
+        }
+    </script>
+
+    <script type="text/javascript">
+        var frameSize = 512;
+        var input;
+        var output;
+
+        function randomInteger(max) {
+            return Math.floor(Math.random() * max);
+        }
+
+        function randomFrame(size) {
+            values = Array.apply(null, Array(size)).map(function() { return randomInteger(256); });
+            return Uint8Array.from(values);
+        };
+
+        function test() {
+            var userFunction = eval($("#code").val());
+
+            input = userFunction || randomFrame(frameSize);
+            output = lzwCompress(input);
+        }
+
+        function display() {
+            // display data
+            
+            $("#input").text(input.join(', '));
+            $("#output").text(output.join(', '));
+
+            // display metrics
+
+            var ratio = input.length / output.length;
+
+            $("#in-size").text(input.length);
+            $("#out-size").text(output.length);
+            $("#ratio").text(ratio);
+        }
+
+        function update() {
+            test();
+            display();
+        }
+    </script>
+
+    <script type="text/javascript">
+        $("#run").on("click", function() {
+            update();
+        });
+    </script>
+    </script>
+</body>
+</html>
