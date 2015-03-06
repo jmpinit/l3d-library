@@ -41,12 +41,20 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            ctx.strokeStyle = "#000";
             for(var i = 0; i < latency.length; i++) {
                 ctx.beginPath();
                 ctx.moveTo(i, canvas.height);
                 ctx.lineTo(i, canvas.height-latency[i]);
                 ctx.stroke();
             }
+
+            // draw 30 fps target
+            ctx.strokeStyle = "#F00";
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height-30);
+            ctx.lineTo(canvas.width, canvas.height-30);
+            ctx.stroke();
         }
 
         function averageLatency() {
