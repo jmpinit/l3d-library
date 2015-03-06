@@ -55,6 +55,55 @@ function clamp(x, a, b) {
     return Math.max(a, Math.min(x, b));
 }
 
+// compresses a Uint8Array using LZW
+// returns compressed Uint8Array
+function lzwCompress(uncompressed) {
+    "use strict";
+
+    function arrayToString(arr) {
+        return arr.map(String.fromCharCode).join('');
+    }
+
+    // build dictionary
+
+    var dictionary = new Map();
+
+    for(var i = 0; i < 256; i++) {
+        dictionary.set(arrayToString([i]), dictionary.size);
+    }
+
+    // compress
+
+    var compressed = [];
+    var word = [];
+
+    for(var i = 0; i < uncompressed.length; i++) {
+        var v = uncompressed[i];
+        var newWord = word.concat([v]);
+        var newWordKey = arrayToString(newWord);
+
+        if(dictionary.has(newWordKey)) {
+            word = newWord;
+        } else {
+            compressed.push(dictionary.get(arrayToString(word)));
+            dictionary.set(newWordKey, dictionary.size);
+            word = [v];
+        }
+    }
+
+    if(word.length != 0) {
+        compressed.push(dictionary.get(arrayToString(word)));
+    }
+
+    return Uint8Array.from(compressed);
+}
+
+function lzwDecompress(compressed) {
+    "use strict";
+
+    // TODO
+}
+
 Cube.prototype = {
     setVoxel: function(x, y, z, r, g, b) {
         x = Math.floor(x);
