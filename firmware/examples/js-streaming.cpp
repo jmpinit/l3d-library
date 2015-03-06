@@ -57,6 +57,7 @@ void handle(String &data, String &result)
     //Serial.println(data.length());
 
     if(data.length() == 512) {
+        {unsigned long startTime = micros();
         for(unsigned int x = 0; x < 8; x++) {
             for(unsigned int y = 0; y < 8; y++) {
                 for(unsigned int z = 0; z < 8; z++) {
@@ -71,10 +72,26 @@ void handle(String &data, String &result)
             }
         }
 
+        unsigned long endTime = micros();
+        Serial.print("r,");
+        Serial.println(endTime - startTime);}
+
+        {unsigned long startTime = micros();
+
         cube.show();
+
+        unsigned long endTime = micros();
+        Serial.print("s,");
+        Serial.println(endTime - startTime);}
     }
 
+    {unsigned long startTime = micros();
+
     result += String(data.length());
+
+    unsigned long endTime = micros();
+    Serial.print("e,");
+    Serial.println(endTime - startTime);}
 }
 
 void loop()
