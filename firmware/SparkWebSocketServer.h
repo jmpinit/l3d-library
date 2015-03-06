@@ -139,7 +139,7 @@ class SparkWebSocketServer {
     void disconnectClient(TCPClient &client);
     void handleStream(String &data, TCPClient &client);
 
-    int timedRead(TCPClient &client);
+    int checkedRead(TCPClient &client);
 
     void sendEncodedData(char *str, TCPClient &client);
     void sendEncodedData(String str, TCPClient &client);

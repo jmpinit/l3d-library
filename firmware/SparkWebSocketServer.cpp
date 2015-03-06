@@ -213,20 +213,20 @@ void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
     uint8_t mask[4];
 
     if(client.connected()) {
-        length = timedRead(client);
+        length = checkedRead(client);
         if(!client.connected() || length==-1) {
             // no data to handle
             return ;
         }
 
-        length = timedRead(client) & 127;
+        length = checkedRead(client) & 127;
         if(!client.connected()) return ;
 
         if(length == 126) {
-            length = timedRead(client) << 8;
+            length = checkedRead(client) << 8;
             if (!client.connected()) return ;
 
-            length |= timedRead(client);
+            length |= checkedRead(client);
             if (!client.connected()) return ;
         } else if(length == 127) {
 #ifdef DEBUG_WS
@@ -236,13 +236,13 @@ void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
         }
 
         // get the mask
-        mask[0] = timedRead(client);
+        mask[0] = checkedRead(client);
         if(!client.connected()) return;
-        mask[1] = timedRead(client);
+        mask[1] = checkedRead(client);
         if(!client.connected()) return;
-        mask[2] = timedRead(client);
+        mask[2] = checkedRead(client);
         if(!client.connected()) return;
-        mask[3] = timedRead(client);
+        mask[3] = checkedRead(client);
         if(!client.connected()) return;
 
         for(int i = 0; i < length; ++i) {
@@ -254,20 +254,10 @@ void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
 
 /** Read one value from a client.
   */
-int SparkWebSocketServer::timedRead(TCPClient &client)
+int SparkWebSocketServer::checkedRead(TCPClient &client)
 {
-    uint8_t test = 0;
-
-    while (test < 20 && !client.available() && client.connected()) {
-        delay(1);
-        test++;
-    }
-
-    if(client.connected()) {
-        return client.read();
-    }
-
-    return -1;
+    while(!client.available());
+    return client.read();
 }
 
 /** Send a string to a client.
@@ -666,7 +656,7 @@ String SparkWebSocketServer::handleHixie76Stream(String &socketString, TCPClient
     // String to hold bytes sent by client to server.
 
     if (client.connected() && client.available()) {
-        bite = timedRead(client);
+        bite = checkedRead(client);
 
         if (bite != -1) {
             if (bite == 0)
