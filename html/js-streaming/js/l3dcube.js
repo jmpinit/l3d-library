@@ -64,6 +64,16 @@ function lzwCompress(uncompressed) {
         return arr.join();
     }
 
+    function getWidth(size) {
+        return Math.ceil(Math.log2(size));
+    }
+
+    function bits(value) {
+        return value.toString(2).split('').map(function(digit) {
+            return digit == "1"? 1 : 0;
+        });
+    }
+
     // build dictionary
 
     var dictionary = new Map();
@@ -71,6 +81,9 @@ function lzwCompress(uncompressed) {
     for(var i = 0; i < 256; i++) {
         dictionary.set(arrayToString([i]), dictionary.size);
     }
+
+    var codeWidth = getWidth(dictionary.size);
+    var bitIndex = 0;
 
     // compress
 
@@ -85,17 +98,39 @@ function lzwCompress(uncompressed) {
         if(dictionary.has(newWordKey)) {
             word = newWord;
         } else {
-            compressed.push(dictionary.get(arrayToString(word)));
+            var code = dictionary.get(arrayToString(word))
+
+            // FIXME size of bits(code) must only increase
+            compressed = compressed.concat(bits(code));
+
+            // add to dictionary
             dictionary.set(newWordKey, dictionary.size);
+
+            // update code width
+            codeWidth = getWidth(dictionary.size);
+
             word = [v];
         }
     }
 
     if(word.length != 0) {
-        compressed.push(dictionary.get(arrayToString(word)));
+        var code = dictionary.get(arrayToString(word));
+        compressed = compressed.concat(bits(code));
     }
 
-    return Uint16Array.from(compressed);
+    var buffer = new Uint8Array(compressed.length / 8);
+
+    for(var i = 0; i < buffer.length; i++) {
+        var value = 0;
+
+        for(var k = 7; k >= 0; k--) {
+            value += Math.pow(2, k) * compressed[i * 8 + k];
+        }
+
+        buffer[i] = value;
+    }
+
+    return buffer;
 }
 
 function lzwDecompress(compressed) {
