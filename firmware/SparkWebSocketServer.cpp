@@ -46,161 +46,63 @@
 #include "Base64.h"
 #include "tropicssl/sha1.h"
 
-#ifdef SUPPORT_HIXIE_76
-#include "MD5.cpp"
-#endif
+#define DEBUG_WS
 
 static TCPClient* blankClient = new TCPClient(MAX_SOCK_NUM);
 
 SparkWebSocketServer::SparkWebSocketServer(TCPServer &tcpServer)
 {
-    for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
-        clients[i] = NULL;
-    }
-
+    source = NULL;
     server = &tcpServer;
-    previousMillis = 0;
-}
-
-TCPClient** SparkWebSocketServer::getFreeClientSlot()
-{
-    for(int i = 0; i < MAX_CLIENTS; i++) {
-        if(clients[i] == NULL)
-            return &clients[i];
-    }
-
-    return NULL;
 }
 
 bool SparkWebSocketServer::handshake(TCPClient &client)
 {
-    uint8_t pos = 0;
-    bool found = false;
-
-    // look for a prior connection from this client
-    /*for(pos = 0; pos < MAX_CLIENTS; pos++) {
-        if(clients[pos] != NULL && client.equals(*clients[pos])) {
+    // there is an empty spot
+    // check request and look for websocket handshake
 #ifdef DEBUG_WS
-            String ip;
-            client.getIP(ip);
-            Serial.print(" SparkWebSocketServer::handshake, client[");
-            Serial.print(pos);
-            Serial.print("]: ");
-            Serial.print(ip);
-            Serial.println(", re-using!!");
-            delay(10);
+    Serial.println("Handshake: analyzing.");
 #endif
-            found = true;
-            break;
-        }
-    }*/
 
-    if(!found) {
-        // find an unused slot
-        for(pos = 0; pos < MAX_CLIENTS; pos++) {
-            if(clients[pos] == NULL) {
-                break;
-            }
-        }
-    }
+    if(analyzeRequest(client)) {
+        // valid WebSocket connection
+        if(source != NULL)
+            disconnectClient();
 
-    if(pos >= MAX_CLIENTS) {
-        // no room for new connection
-        disconnectClient(client);
+        // keep track of new connection
+        source = &client;
+
 #ifdef DEBUG_WS
-        Serial.println("Handshake, but no room for new connection.");
-        Serial.println("Disconnecting/no free space for client");
+        Serial.println("WebSocket connection established.");
 #endif
-        return false;
+        return true;
     } else {
-        // there is an empty spot
-        // check request and look for websocket handshake
-#ifdef DEBUG_WS
-        String ip;
-        //client.getIP(ip);
-        Serial.print(" SparkWebSocketServer::handshake, client[");
-        Serial.print(pos);
-        Serial.print("]: ");
-        Serial.print(ip);
-        Serial.println(", analyzing");
-#endif
-
-        if(analyzeRequest(client)) {
-            // connection established. add client
-            clients[pos] = &client;
-#ifdef DEBUG_WS
-            String ip;
-            //client.getIP(ip);
-            Serial.print("SparkWebSocketServer established, ");
-            Serial.println(ip);
-            if(clients[pos]->connected())
-                Serial.println("and client still connected.");
-            else
-                Serial.println("but client disconnected!");
-#endif
-            return true;
-        } else {
-            // might just need to break until out of socket_client loop
-            return false;
-        }
+        return false;
     }
 }
 
-/** Disconnect client from server.
-  @param client Client to disconnect.
-  */
-void SparkWebSocketServer::disconnectClient(TCPClient &client)
+/** Disconnect client from server. */
+void SparkWebSocketServer::disconnectClient()
 {
 #ifdef DEBUG_WS
-    Serial.print("Terminating TCPClient: ");
-    String ip;
-    //client.getIP(ip);
-    Serial.println(ip);
+    Serial.print("Terminating TCPClient.");
 #endif
 
-    if(hixie76style) {
-#ifdef SUPPORT_HIXIE_76
-        // should send 0xFF00 to server to tell it I'm quitting here.
-        client.write((uint8_t) 0xFF);
-        client.write((uint8_t) 0x00);
-#endif
-    } else {
-        // should send 0x8700 to server to tell it I'm quitting here.
-        client.write((uint8_t) 0x87);
-        client.write((uint8_t) 0x00);
-    }
+    // should send 0x8700 to server to tell it I'm quitting here.
+    source->write((uint8_t) 0x87);
+    source->write((uint8_t) 0x00);
 
-    client.flush();
+    source->flush();
     delay(10);
-    client.stop();
+    source->stop();
 
-    // remove client from the list
-    for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
-        if(clients[i] != NULL && client == *clients[i]) {
-#ifdef DEBUG_WS
-            String ip;
-            //client.getIP(ip);
-            Serial.print("found: ");
-            Serial.print(ip);
-            Serial.println(" and removing it from the list of the clients");
-#endif
-            TCPClient *tmp = clients[i];
-            delete tmp;
-            clients[i] = NULL;
-            break;
-        }
-    }
+    delete source;
+    source = NULL;
 }
 
 void SparkWebSocketServer::getData(String &data, TCPClient &client)
 {
-    if(hixie76style) {
-#ifdef SUPPORT_HIXIE_76
-        handleHixie76Stream(data, client);
-#endif
-    } else {
-        handleStream(data, client);
-    }
+    handleStream(data, client);
 }
 
 /** Read data from client.
@@ -209,11 +111,21 @@ void SparkWebSocketServer::getData(String &data, TCPClient &client)
 */
 void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
 {
-    int length;
-    uint8_t mask[4];
+    //int length;
+    //uint8_t mask[4];
 
+    char buffer[512];
     if(client.connected()) {
-        length = checkedRead(client);
+        unsigned int index = 0;
+        //while(!client.available());
+        while(client.available() > 0 && index < sizeof(buffer)) {
+            buffer[index++] = client.read();
+        }
+
+        for(int i = 0; i < 504; i++) {
+            data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
+        }
+        /*length = checkedRead(client);
         if(!client.connected() || length==-1) {
             // no data to handle
             return ;
@@ -248,20 +160,18 @@ void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
         for(int i = 0; i < length; ++i) {
             data += (char) (client.read() ^ mask[i % 4]);
             if(!client.connected()) return;
-        }
+        }*/
     }
 }
 
-/** Read one value from a client.
-  */
+/** Read one value from a client. */
 int SparkWebSocketServer::checkedRead(TCPClient &client)
 {
     while(!client.available());
     return client.read();
 }
 
-/** Send a string to a client.
-  */
+/** Send a string to a client. */
 void SparkWebSocketServer::sendEncodedData(char *str, TCPClient &client)
 {
     int size = strlen(str);
@@ -285,8 +195,7 @@ void SparkWebSocketServer::sendEncodedData(char *str, TCPClient &client)
     }
 }
 
-/** Send a string to a client.
-  */
+/** Send a string to a client. */
 void SparkWebSocketServer::sendEncodedData(String str, TCPClient &client)
 {
     int size = str.length() + 1;
@@ -297,111 +206,57 @@ void SparkWebSocketServer::sendEncodedData(String str, TCPClient &client)
     sendEncodedData(cstr, client);
 }
 
-/** Send a string to a client.
-  */
+/** Send a string to a client. */
 void SparkWebSocketServer::sendData(const char *str, TCPClient &client)
 {
-    if(client && client.connected()) {
-        if(hixie76style) {
-            client.print(0x00); // Frame start
-            client.print(str);
-            client.write(0xFF); // Frame end
-        } else {
-            sendEncodedData(str, client);
-        }
+    if (client && client.connected()) {
+        sendEncodedData(str, client);
     }
 }
 
-/** Send a string to a client.
-  */
+/** Send a string to a client. */
 void SparkWebSocketServer::sendData(String str, TCPClient &client)
 {
     if(client && client.connected()) {
-        if(hixie76style) {
-            client.print((char)0x00); // Frame start
-            client.print(str);
-            client.write(0xFF); // Frame end
-        } else {
-            sendEncodedData(str, client);
-        }
+        sendEncodedData(str, client);
     }
 }
 void SparkWebSocketServer::doIt()
 {
-    // handle new clients
-
-    unsigned long currentMillis = millis();
-    bool beat = currentMillis - previousMillis > HB_INTERVAL;
-
-    if(beat) {
-        // save the last time you blinked the LED
-        previousMillis = currentMillis;
-    }
-
-    static int count = 0; // FIXME
-
-    /*Serial.print(count);
-    Serial.print(" ) ");
-    if(clients[0] == NULL || !clients[0]->connected()) {
-        Serial.println("NOT CONNECTED");
-    } else {
-        Serial.println("CONNECTED");
-    }*/
-
-    {
-    unsigned long startTime = micros();
-
     TCPClient* client = blankClient;
-    if(clients[0] == NULL || !clients[0]->connected()) {
+
+    if(source == NULL || !source->connected()) {
         *client = server->available();
 
         if(client != NULL && client->connected()) {
-#ifdef DEBUG_WS
-            String ip;
-            //client.getIP(ip);
-            Serial.print(count);
-            Serial.print(") new client connecting, testing: ");
-            Serial.println(ip);
-#endif
             // attempt to initiate connection
+#ifdef DEBUG_WS
             bool success = handshake(*client);
 
             if(success) {
-                Serial.println("handshake successful");
+                Serial.println("Handshake successful.");
             } else {
-                Serial.println("handshake FAILED");
+                Serial.println("Handshake FAILED.");
             }
+#else
+            handshake(*client);
+#endif
         }
     }
 
-    unsigned long endTime = micros();
-    Serial.print("a,");
-    Serial.println(endTime - startTime);
-    }
-
-    for(uint8_t i = 0; i < MAX_CLIENTS; i++) {
-        TCPClient *myClient = clients[i];
-
-        if(myClient == NULL) continue;
-
-        if(!myClient->connected()) {
+    // tick client
+    if(source != NULL) {
+        if(!source->connected()) {
 #ifdef DEBUG_WS
-            String ip;
-            //myClient->getIP(ip);
-            Serial.print(count);
-            Serial.print(") Client[");
-            Serial.print(i);
-            Serial.print("]: ");
-            Serial.print(ip);
-            Serial.println(" disconnected!");
+            Serial.println("Found disconnect in tick.");
 #endif
-            disconnectClient(*myClient);
+            disconnectClient();
         } else {
             String req;
             {
                 unsigned long startTime = micros();
 
-            getData(req, *myClient);
+                getData(req, *source);
 
                 unsigned long endTime = micros();
                 Serial.print("b,");
@@ -410,17 +265,14 @@ void SparkWebSocketServer::doIt()
 
             if(req.length() > 0) {
 #ifdef DEBUG_WS
-                String ip;
-                //myClient->getIP(ip);
                 Serial.print("got : ");
-                Serial.print(req + " from: ");
-                Serial.println(ip);
+                Serial.println(req);
 #endif
                 String result;
                 {
                     unsigned long startTime = micros();
 
-                (*cBack)(req, result);
+                    (*cBack)(req, result);
 
                     unsigned long endTime = micros();
                     Serial.print("c,");
@@ -433,49 +285,23 @@ void SparkWebSocketServer::doIt()
                 {
                     unsigned long startTime = micros();
 
-                sendData(result, *myClient);
+                    sendData(result, *source);
 
                     unsigned long endTime = micros();
                     Serial.print("d,");
                     Serial.println(endTime - startTime);
                 }
-            } else {
-                if(false) {//beat) {
-                    Serial.println("beat");
-
-                    if(myClient->connected()) {
-#ifdef DEBUG_WS
-                        String ip;
-                        //myClient->getIP(ip);
-                        Serial.print("sending HB to: ");
-                        Serial.println(ip);
-#endif
-                        // TODO can this be removed?
-                        sendData("HB", *myClient);
-                    } else {
-#ifdef DEBUG_WS
-                        Serial.println("client found disconnected in beat.");
-#endif
-                        disconnectClient(*myClient);
-                    }
-                }
             }
         }
     }
-
-    count++;
-
-    Serial.println("--");
 }
 
 /** Analyze request and respond if it is for a Websocket connection.
   @param client Client making the request.
-
   @return True if successful Websocket connection is made. False otherwise.
   */
 bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
 {
-    // Use String library to do some sort of read() magic here.
     String temp;
 
     int bite;
@@ -483,10 +309,8 @@ bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
     String oldKey[2];
     String newKey;
 
-    hixie76style = false;
-
 #ifdef DEBUG_WS
-    Serial.println("Analyzing request headers");
+    Serial.println("Analyzing request headers.");
 #endif
 
     // TODO: More robust string extraction
@@ -501,12 +325,13 @@ bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
             // TODO: Should ignore case when comparing and allow 0-n whitespace after ':'. See the spec:
             // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
             if(!foundUpgrade && temp.startsWith("Upgrade: WebSocket")) {
-                // OK, it's a websockets handshake for sure
-                foundUpgrade = true;
-                hixie76style = true;
+                foundUpgrade = true; // OK, it's a websockets handshake for sure
+#ifdef DEBUG_WS
+                Serial.println("hixie76style not supported.");
+#endif
+                disconnectClient();
             } else if(!foundUpgrade && temp.startsWith("Upgrade: websocket")) {
-                foundUpgrade = true;
-                hixie76style = false;
+                foundUpgrade = true; // OK, it's a websockets handshake for sure
             } else if(temp.startsWith("Origin: ")) {
                 origin = temp.substring(8, temp.length() - 2); // Don't save last CR+LF
             } else if(temp.startsWith("Host: ")) {
@@ -536,71 +361,7 @@ bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
     // Assert that we have all headers that are needed. If so, go ahead and
     // send response headers.
     if(foundUpgrade == true) {
-#ifdef SUPPORT_HIXIE_76
-        if (hixie76style && host.length() > 0 && oldKey[0].length() > 0 && oldKey[1].length() > 0) {
-            // All ok, proceed with challenge and MD5 digest
-            char key3[9] = {0};
-            // What now is in temp should be the third key
-            temp.toCharArray(key3, 9);
-
-            // Process keys
-            for(int i = 0; i <= 1; i++) {
-                unsigned int spaces = 0;
-                String numbers;
-
-                for(int c = 0; c < oldKey[i].length(); c++) {
-                    char ac = oldKey[i].charAt(c);
-
-                    if(ac >= '0' && ac <= '9') {
-                        numbers += ac;
-                    }
-
-                    if(ac == ' ') {
-                        spaces++;
-                    }
-                }
-
-                char numberschar[numbers.length() + 1];
-                numbers.toCharArray(numberschar, numbers.length() + 1);
-                intkey[i] = strtoul(numberschar, NULL, 10) / spaces;
-            }
-
-            unsigned char challenge[16] = {0};
-            challenge[0] = (unsigned char) ((intkey[0] >> 24) & 0xFF);
-            challenge[1] = (unsigned char) ((intkey[0] >> 16) & 0xFF);
-            challenge[2] = (unsigned char) ((intkey[0] >>  8) & 0xFF);
-            challenge[3] = (unsigned char) ((intkey[0]      ) & 0xFF);
-            challenge[4] = (unsigned char) ((intkey[1] >> 24) & 0xFF);
-            challenge[5] = (unsigned char) ((intkey[1] >> 16) & 0xFF);
-            challenge[6] = (unsigned char) ((intkey[1] >>  8) & 0xFF);
-            challenge[7] = (unsigned char) ((intkey[1]      ) & 0xFF);
-
-            memcpy(challenge + 8, key3, 8);
-
-            unsigned char md5Digest[16];
-            MD5(challenge, md5Digest, 16);
-
-            client.print("HTTP/1.1 101 Web Socket Protocol Handshake\r\n");
-            client.print("Upgrade: WebSocket\r\n");
-            client.print("Connection: Upgrade\r\n");
-            client.print("Sec-WebSocket-Origin: ");
-            client.print(origin);
-            client.print(CRLF);
-
-            // The "Host:" value should be used as location
-            client.print("Sec-WebSocket-Location: ws://");
-            client.print(host);
-            client.print(socket_urlPrefix);
-            client.print(CRLF);
-            client.print(CRLF);
-
-            client.write(md5Digest, 16);
-
-            return true;
-        }
-#endif
-
-        if (!hixie76style && newKey.length() > 0) {
+        if (newKey.length() > 0) {
 #ifdef DEBUG_WS
             Serial.println("!hixie76style: " + newKey);
 #endif
@@ -637,51 +398,16 @@ bool SparkWebSocketServer::analyzeRequest(TCPClient &client)
             return true;
         } else {
             // something went horribly wrong
+#ifdef DEBUG_WS
+            Serial.println("Something went horribly wrong.");
+#endif
             return false;
         }
     } else {
         // Nope, failed handshake. Disconnect
 #ifdef DEBUG_WS
-        Serial.println("Header mismatch");
+        Serial.println("Header mismatch.");
 #endif
         return false;
     }
 }
-
-#ifdef SUPPORT_HIXIE_76
-String SparkWebSocketServer::handleHixie76Stream(String &socketString, TCPClient &client)
-{
-    int bite;
-    int frameLength = 0;
-    // String to hold bytes sent by client to server.
-
-    if (client.connected() && client.available()) {
-        bite = checkedRead(client);
-
-        if (bite != -1) {
-            if (bite == 0)
-                continue; // Frame start, don't save
-
-            if ((uint8_t) bite == 0xFF) {
-                // Frame end. Process what we got.
-
-            } else {
-                socketString += (char)bite;
-                frameLength++;
-
-                if (frameLength > MAX_FRAME_LENGTH) {
-                    // Too big to handle!
-#ifdef DEBUG_WS
-                    Serial.print("Client send frame exceeding ");
-                    Serial.print(MAX_FRAME_LENGTH);
-                    Serial.println(" bytes");
-#endif
-                    return;
-                }
-            }
-        }
-    }
-
-}
-
-#endif
