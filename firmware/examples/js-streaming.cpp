@@ -37,12 +37,6 @@ void setup()
     cube.begin();
     cube.background(black);
 
-    unsigned long startTime = micros();
-    Serial.println("X");
-    unsigned long endTime = micros();
-    Serial.print("serial: ");
-    Serial.println(endTime - startTime);
-
     Serial.println("Setup done");
 }
 
@@ -56,7 +50,7 @@ void handle(String &data, String &result)
     //Serial.print("in handle, got: ");
     //Serial.println(data.length());
 
-    if(data.length() == 512) {
+    if(data.length() == 504) {
         {unsigned long startTime = micros();
         for(unsigned int x = 0; x < 8; x++) {
             for(unsigned int y = 0; y < 8; y++) {
@@ -87,7 +81,7 @@ void handle(String &data, String &result)
 
     {unsigned long startTime = micros();
 
-    result += String(data.length());
+    result += "504";//String(data.length());
 
     unsigned long endTime = micros();
     Serial.print("e,");

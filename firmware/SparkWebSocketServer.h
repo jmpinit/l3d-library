@@ -86,7 +86,7 @@ class SparkWebSocketServer {
     String host;
 
     bool analyzeRequest(TCPClient &client);
-    void handleStream(String &data, TCPClient &client);
+    bool handleStream(String &data, TCPClient &client);
 
     void disconnectClient(void);
 

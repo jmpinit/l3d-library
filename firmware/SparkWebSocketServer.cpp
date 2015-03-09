@@ -109,59 +109,65 @@ void SparkWebSocketServer::getData(String &data, TCPClient &client)
   @param data String to read the received data into.
   @param client TCPClient to get the data from.
 */
-void SparkWebSocketServer::handleStream(String &data, TCPClient &client)
+bool SparkWebSocketServer::handleStream(String &data, TCPClient &client)
 {
-    //int length;
-    //uint8_t mask[4];
+    const int packetLen = 512;
+    const int dataLen = packetLen - 8; // length bytes and mask
 
-    char buffer[512];
+    char buffer[packetLen];
+
     if(client.connected()) {
-        unsigned int index = 0;
-        //while(!client.available());
-        while(client.available() > 0 && index < sizeof(buffer)) {
-            buffer[index++] = client.read();
+        unsigned int count;
+
+        {unsigned long startTime = micros();
+
+        while(client.available() == 0);
+
+        unsigned long endTime = micros();
+        Serial.print("w,");
+        Serial.println(endTime - startTime);}
+
+        for(count = 0; client.available() > 0 && count < sizeof(buffer); count++) {
+            buffer[count] = client.read();
         }
 
-        for(int i = 0; i < 504; i++) {
-            data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
-        }
-        /*length = checkedRead(client);
-        if(!client.connected() || length==-1) {
-            // no data to handle
-            return ;
-        }
+        Serial.println((int)buffer[0]);
+        if(count == packetLen) {
+            int lengthType = buffer[1] & 127;
 
-        length = checkedRead(client) & 127;
-        if(!client.connected()) return ;
+            if(lengthType == 126) {
+                int length = (buffer[2] << 8) | buffer[3];
 
-        if(length == 126) {
-            length = checkedRead(client) << 8;
-            if (!client.connected()) return ;
+                if(length == dataLen) {
+                    for(int i = 0; i < length; i++) {
+                        data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
+                    }
 
-            length |= checkedRead(client);
-            if (!client.connected()) return ;
-        } else if(length == 127) {
+                    return true;
+                }
 #ifdef DEBUG_WS
-            Serial.println("No support for over 16 bit sized messages");
+                else {
+                    Serial.print("Unexpected length: ");
+                    Serial.println(length);
+                }
 #endif
-            return;
+            }
+#ifdef DEBUG_WS
+            else {
+                Serial.print("Expected type 126 but got ");
+                Serial.println(lengthType);
+            }
+#endif
         }
-
-        // get the mask
-        mask[0] = checkedRead(client);
-        if(!client.connected()) return;
-        mask[1] = checkedRead(client);
-        if(!client.connected()) return;
-        mask[2] = checkedRead(client);
-        if(!client.connected()) return;
-        mask[3] = checkedRead(client);
-        if(!client.connected()) return;
-
-        for(int i = 0; i < length; ++i) {
-            data += (char) (client.read() ^ mask[i % 4]);
-            if(!client.connected()) return;
-        }*/
+#ifdef DEBUG_WS
+        else {
+            Serial.print("Unexpected number of bytes received: ");
+            Serial.println(count);
+        }
+#endif
     }
+
+    return false;
 }
 
 /** Read one value from a client. */
