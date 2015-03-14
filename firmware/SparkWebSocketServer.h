@@ -48,6 +48,9 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 
 #define CRLF "\r\n"
 
+#define HB_INTERVAL 2500
+#define TIMEOUT 5000
+
 #ifndef CALLBACK_FUNCTIONS
 #define CALLBACK_FUNCTIONS 1
 #endif
@@ -69,7 +72,7 @@ class SparkWebSocketServer {
 
     bool handshake(TCPClient &client);
 
-    void getData(String &data, TCPClient &client);
+    bool getData(String &data, TCPClient &client);
 
     void sendData(const char *str, TCPClient &client);
     void sendData(String str, TCPClient &client);
@@ -79,6 +82,11 @@ class SparkWebSocketServer {
     CallBack cBack;
 
   private:
+    const int packetLen = 520;
+    const int dataLen = packetLen - 8; // length bytes and mask
+
+    unsigned long lastBeatTime;
+    unsigned long lastContactTime;
     TCPServer* server;
     TCPClient* source;
 
@@ -87,6 +95,7 @@ class SparkWebSocketServer {
 
     bool analyzeRequest(TCPClient &client);
     bool handleStream(String &data, TCPClient &client);
+    int packetHealth(char* buffer);
 
     void disconnectClient(void);
 

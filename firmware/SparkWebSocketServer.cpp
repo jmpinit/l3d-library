@@ -46,8 +46,6 @@
 #include "Base64.h"
 #include "tropicssl/sha1.h"
 
-#define DEBUG_WS
-
 static TCPClient* blankClient = new TCPClient(MAX_SOCK_NUM);
 
 SparkWebSocketServer::SparkWebSocketServer(TCPServer &tcpServer)
@@ -100,74 +98,78 @@ void SparkWebSocketServer::disconnectClient()
     source = NULL;
 }
 
-void SparkWebSocketServer::getData(String &data, TCPClient &client)
-{
-    handleStream(data, client);
+int SparkWebSocketServer::packetHealth(char* buffer) {
+    int opcode = buffer[0] & 0xF;
+    int lengthType = buffer[1] & 127;
+    int length = (buffer[2] << 8) | buffer[3];
+
+    Serial.print(opcode);
+    Serial.print(", ");
+    Serial.print(lengthType);
+    Serial.print(", ");
+    Serial.println(length);
+
+    if(lengthType == 126) {
+        if(length == dataLen) {
+            return 0;
+        } else {
+#ifdef DEBUG_WS
+            Serial.print("Unexpected length: ");
+            Serial.println(length);
+#endif
+
+            return 1;
+        }
+    } else {
+#ifdef DEBUG_WS
+        Serial.print("Expected type 126 but got ");
+        Serial.println(lengthType);
+#endif
+
+        return 2;
+    }
 }
 
 /** Read data from client.
   @param data String to read the received data into.
   @param client TCPClient to get the data from.
 */
-bool SparkWebSocketServer::handleStream(String &data, TCPClient &client)
+bool SparkWebSocketServer::getData(String &data, TCPClient &client)
 {
-    const int packetLen = 512;
-    const int dataLen = packetLen - 8; // length bytes and mask
-
     char buffer[packetLen];
 
     if(client.connected()) {
-        unsigned int count;
-
-        {unsigned long startTime = micros();
-
         while(client.available() == 0);
 
-        unsigned long endTime = micros();
-        Serial.print("w,");
-        Serial.println(endTime - startTime);}
-
-        for(count = 0; client.available() > 0 && count < sizeof(buffer); count++) {
+        for(int count = 0; client.available() > 0 && count < packetLen; count++) {
             buffer[count] = client.read();
         }
 
-        Serial.println((int)buffer[0]);
-        if(count == packetLen) {
-            int lengthType = buffer[1] & 127;
+        if(packetHealth(buffer) != 0)
+            return false;
+        /*int failCount = 0;
+        while(packetHealth(buffer) > 0) {
+            // make room
+            for(int i = 0; i < packetLen-1; i++)
+                buffer[i] = buffer[i+1];
 
-            if(lengthType == 126) {
-                int length = (buffer[2] << 8) | buffer[3];
+            while(client.available() == 0);
 
-                if(length == dataLen) {
-                    for(int i = 0; i < length; i++) {
-                        data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
-                    }
+            buffer[packetLen-1] = client.read();
 
-                    return true;
-                }
-#ifdef DEBUG_WS
-                else {
-                    Serial.print("Unexpected length: ");
-                    Serial.println(length);
-                }
-#endif
-            }
-#ifdef DEBUG_WS
-            else {
-                Serial.print("Expected type 126 but got ");
-                Serial.println(lengthType);
-            }
-#endif
+            failCount++;
         }
-#ifdef DEBUG_WS
-        else {
-            Serial.print("Unexpected number of bytes received: ");
-            Serial.println(count);
+
+        if(failCount != 0)
+            Serial.println(failCount);
+        */
+
+        for(int i = 0; i < dataLen; i++) {
+            data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
         }
-#endif
     }
 
-    return false;
+    return true;
 }
 
 /** Read one value from a client. */
@@ -184,20 +186,25 @@ void SparkWebSocketServer::sendEncodedData(char *str, TCPClient &client)
 
     if(!client) return;
 
-    // string type
-    client.write(0x81);
-
     // NOTE: no support for > 16-bit sized messages
     if(size > 125) {
-        client.write(126);
-        client.write((uint8_t) (size >> 8));
-        client.write((uint8_t) (size && 0xFF));
-    } else {
-        client.write((uint8_t) size);
-    }
+        uint8_t buffer[size+4];
+        strcpy((char*)(buffer+4), str);
 
-    for(int i = 0; i < size; ++i) {
-        client.write(str[i]);
+        buffer[0] = 0x81; // string type
+        buffer[1] = 126;
+        buffer[2] = size >> 8;
+        buffer[3] = size & 0xFF;
+
+        client.write(buffer, sizeof(buffer));
+    } else {
+        uint8_t buffer[size+2];
+        strcpy((char*)(buffer+2), str);
+
+        buffer[0] = 0x81; // string type
+        buffer[1] = size;
+
+        client.write(buffer, sizeof(buffer));
     }
 }
 
@@ -227,8 +234,19 @@ void SparkWebSocketServer::sendData(String str, TCPClient &client)
         sendEncodedData(str, client);
     }
 }
+
 void SparkWebSocketServer::doIt()
 {
+    // heartbeat
+
+    unsigned long currentTime = millis();
+    bool beat = currentTime - lastBeatTime > HB_INTERVAL;
+
+    if(beat)
+        lastBeatTime = currentTime;
+
+    // check for client
+
     TCPClient* client = blankClient;
 
     if(source == NULL || !source->connected()) {
@@ -247,10 +265,13 @@ void SparkWebSocketServer::doIt()
 #else
             handshake(*client);
 #endif
+            lastBeatTime = millis();
+            lastContactTime = millis();
         }
     }
 
     // tick client
+
     if(source != NULL) {
         if(!source->connected()) {
 #ifdef DEBUG_WS
@@ -259,46 +280,37 @@ void SparkWebSocketServer::doIt()
             disconnectClient();
         } else {
             String req;
-            {
-                unsigned long startTime = micros();
+            bool success = getData(req, *source);
 
-                getData(req, *source);
-
-                unsigned long endTime = micros();
-                Serial.print("b,");
-                Serial.println(endTime - startTime);
+            if(!success) {
+                sendData("s", *source);
+                delay(100);
+                source->flush();
             }
 
-            if(req.length() > 0) {
+            if(success && req.length() > 0) {
 #ifdef DEBUG_WS
                 Serial.print("got : ");
                 Serial.println(req);
 #endif
                 String result;
-                {
-                    unsigned long startTime = micros();
-
-                    (*cBack)(req, result);
-
-                    unsigned long endTime = micros();
-                    Serial.print("c,");
-                    Serial.println(endTime - startTime);
-                }
+                (*cBack)(req, result);
+                lastContactTime = millis();
 #ifdef DEBUG_WS
                 Serial.print("result: ");
                 Serial.println(result);
 #endif
-                {
-                    unsigned long startTime = micros();
 
-                    sendData(result, *source);
+                //sendData(result, *source);
+            }
 
-                    unsigned long endTime = micros();
-                    Serial.print("d,");
-                    Serial.println(endTime - startTime);
-                }
+            if(beat) {
+                sendData("HB", *source);
             }
         }
+
+        if(millis() - lastContactTime > TIMEOUT)
+            disconnectClient();
     }
 }
 
