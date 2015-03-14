@@ -103,12 +103,6 @@ int SparkWebSocketServer::packetHealth(char* buffer) {
     int lengthType = buffer[1] & 127;
     int length = (buffer[2] << 8) | buffer[3];
 
-    Serial.print(opcode);
-    Serial.print(", ");
-    Serial.print(lengthType);
-    Serial.print(", ");
-    Serial.println(length);
-
     if(lengthType == 126) {
         if(length == dataLen) {
             return 0;
@@ -282,12 +276,6 @@ void SparkWebSocketServer::doIt()
             String req;
             bool success = getData(req, *source);
 
-            if(!success) {
-                sendData("s", *source);
-                delay(100);
-                source->flush();
-            }
-
             if(success && req.length() > 0) {
 #ifdef DEBUG_WS
                 Serial.print("got : ");
@@ -301,14 +289,15 @@ void SparkWebSocketServer::doIt()
                 Serial.println(result);
 #endif
 
-                //sendData(result, *source);
+                sendData(result, *source);
             }
 
-            if(beat) {
+            /*if(beat) {
                 sendData("HB", *source);
-            }
+            }*/
         }
 
+        // disconnect client on timeout
         if(millis() - lastContactTime > TIMEOUT)
             disconnectClient();
     }

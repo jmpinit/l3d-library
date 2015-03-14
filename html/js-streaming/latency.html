@@ -76,14 +76,10 @@
             $("#average").text(sum / latency.length);
         }
 
-        function live() {
-            sphere.x = 4 + 4 * Math.sin(time / 1000);
-        }
-
         function connect(address) {
             console.log("connecting to", address);
             cube = new Cube(address);
-            cube.rate = 40;
+            cube.rate = 5;
 
             cube.onrefresh = function(cube) {
                 if(latency.length < historySize)
@@ -102,7 +98,8 @@
                 $("#buffered").text(cube.ws.bufferedAmount);
 
                 // test pattern
-                live();
+                sphere.x = 4 + 4 * Math.sin(time / 1000);
+
                 for(var z = 0; z < 8; z++) {
                     for(var y = 0; y < 8; y++) {
                         for(var x = 0; x < 8; x++) {
@@ -153,6 +150,7 @@
             }
         });
 
+        // time variable for effect animation
         setInterval(function() {
             time += 10;
         }, 10);

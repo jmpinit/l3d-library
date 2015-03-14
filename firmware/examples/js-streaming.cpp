@@ -67,6 +67,8 @@ void handle(String &data, String &result)
 
         cube.show();
     }
+
+    result += String(data.length());
 }
 
 void loop()
