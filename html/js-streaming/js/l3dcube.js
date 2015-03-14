@@ -41,13 +41,20 @@ function Cube(address) {
         var msg = evt.data;
         console.log("got msg: " + msg);
 
-        if(parseInt(msg) == this.frameSize) {
+        if(msg == 's') {
+            cube.clearToSend = false;
+            setTimeout(function() {
+                cube.clearToSend = true;
+            }, 5000);
+        }
+
+        /*if(parseInt(msg) == this.frameSize) { FIXME
             cube.clearToSend = true;
         } else {
             if(!this.clearToSend) {
                 setTimeout(function() { cube.clearToSend = true; }, cube.rate);
             }
-        }
+        }*/
     };
 }
 
@@ -173,6 +180,12 @@ function lzwDecompress(compressed) {
 }
 
 Cube.prototype = {
+    changeSize: function(newsize) {
+        this.frameSize = newsize;
+        this.frameBuffer = new ArrayBuffer(this.frameSize);
+        console.log("size changed to ", this.frameSize);
+    },
+
     setVoxel: function(x, y, z, r, g, b) {
         x = Math.floor(x);
         y = Math.floor(y);
@@ -210,16 +223,17 @@ Cube.prototype = {
     refresh: function() {
         var cube = this;
 
-        if(this.clearToSend) {
+        //if(this.clearToSend) { FIXME
+        if(this.clearToSend && this.ws.bufferedAmount == 0) {
             if(this.onrefresh !== undefined) {
                 this.onrefresh(this);
             }
 
             this.ws.send(this.frameBuffer);
-            this.clearToSend = false;
+            //this.clearToSend = false;
 
             setTimeout(function() { cube.refresh(); }, cube.rate);
-            console.log("sent frame");
+            //console.log("sent frame");
         } else {
             // check for readiness every 5 millis
             setTimeout(function() { cube.refresh(); }, 5);

@@ -13,12 +13,21 @@
         <tr><td>Status:</td><td id="status">Disconnected</td></tr>
     </table>
 
+    <input id="rate-in" type="range" min=1 max=100 value=40></input><span id="rate-out"></span><br>
+
     <canvas id="latency" style="border: solid;"></canvas>
+
     <table>
         <tr><td>average latency (ms):</td><td><p id="average"></p></td></tr>
+        <tr><td>buffered amount (bytes):</td><td><p id="buffered"></p></td></tr>
     </table>
 
     <script type="text/javascript">
+        time = 0;
+        cube = null;
+
+        var sphere = {x: 4, y: 4, z: 4};
+
         if(!("WebSocket" in window)) {
             alert("WebSocket NOT supported by your Browser!");
         }
@@ -67,10 +76,14 @@
             $("#average").text(sum / latency.length);
         }
 
+        function live() {
+            sphere.x = 4 + 4 * Math.sin(time / 1000);
+        }
+
         function connect(address) {
             console.log("connecting to", address);
             cube = new Cube(address);
-            cube.rate = 5;
+            cube.rate = 40;
 
             cube.onrefresh = function(cube) {
                 if(latency.length < historySize)
@@ -85,6 +98,24 @@
                 averageLatency();
 
                 last = millis();
+
+                $("#buffered").text(cube.ws.bufferedAmount);
+
+                // test pattern
+                live();
+                for(var z = 0; z < 8; z++) {
+                    for(var y = 0; y < 8; y++) {
+                        for(var x = 0; x < 8; x++) {
+                            var d = Math.sqrt(Math.pow(x-sphere.x, 2)+Math.pow(y-sphere.y, 2)+Math.pow(z-sphere.z, 2));
+
+                            if(d < 3) {
+                                cube.setVoxel(x, y, z, 255, 0, 0);
+                            } else {
+                                cube.setVoxel(x, y, z, 0, 0, 0);
+                            }
+                        }
+                    }
+                }
             }
 
             cube.onopen = function(cube) {
@@ -113,6 +144,18 @@
                 alert("Please enter the IP address of the cube.");
             }
         });
+
+        $("#rate-in").change(function() {
+            $("#rate-out").text($(this).val());
+
+            if(cube !== null) {
+                cube.rate = $(this).val();
+            }
+        });
+
+        setInterval(function() {
+            time += 10;
+        }, 10);
     </script>
 </body>
 </html>

@@ -18,7 +18,9 @@ void setup()
     CallBack cb = &handle;
     mine.setCallBack(cb);
 
-    Serial.begin(115200);
+    Serial.begin(1000000);
+
+    while(Serial.available() == 0);
 
     IPAddress ip = WiFi.localIP();
     sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
@@ -62,11 +64,9 @@ void handle(String &data, String &result)
                 }
             }
         }
+
+        cube.show();
     }
-
-    result += String(data.length());
-
-    cube.show();
 }
 
 void loop()
