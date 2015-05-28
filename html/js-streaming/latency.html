@@ -150,10 +150,11 @@
             }
         });
 
-        // time variable for effect animation
-        setInterval(function() {
+        var ticker = new Worker("js/clockworker.js");
+        ticker.addEventListener("message", function(e) {
             time += 10;
-        }, 10);
+        });
+        ticker.postMessage(["set", 10]);
     </script>
 </body>
 </html>
