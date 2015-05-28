@@ -87,7 +87,7 @@ void SparkWebSocketServer::disconnectClient()
 #endif
 
     // should send 0x8700 to server to tell it I'm quitting here.
-    source->write((uint8_t) 0x87);
+    source->write((uint8_t) 0x88);
     source->write((uint8_t) 0x00);
 
     source->flush();
