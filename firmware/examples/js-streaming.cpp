@@ -20,7 +20,8 @@ void setup()
 
     Serial.begin(1000000);
 
-    while(Serial.available() == 0);
+    //while(Serial.available() == 0);
+    while(!WiFi.ready());
 
     IPAddress ip = WiFi.localIP();
     sprintf(ipString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
