@@ -94,76 +94,60 @@ void SparkWebSocketServer::disconnectClient()
     delay(10);
     source->stop();
 
-    delete source;
     source = NULL;
-}
-
-int SparkWebSocketServer::packetHealth(char* buffer) {
-    int opcode = buffer[0] & 0xF;
-    int lengthType = buffer[1] & 127;
-    int length = (buffer[2] << 8) | buffer[3];
-
-    if(lengthType == 126) {
-        if(length == dataLen) {
-            return 0;
-        } else {
-#ifdef DEBUG_WS
-            Serial.print("Unexpected length: ");
-            Serial.println(length);
-#endif
-
-            return 1;
-        }
-    } else {
-#ifdef DEBUG_WS
-        Serial.print("Expected type 126 but got ");
-        Serial.println(lengthType);
-#endif
-
-        return 2;
-    }
 }
 
 /** Read data from client.
   @param data String to read the received data into.
   @param client TCPClient to get the data from.
 */
-bool SparkWebSocketServer::getData(String &data, TCPClient &client)
+PacketType SparkWebSocketServer::readPacket(String &data, TCPClient &client)
 {
     char buffer[packetLen];
+    PacketType type = TYPE_NONE;
 
-    if(client.connected()) {
-        while(client.available() == 0);
-
-        for(int count = 0; client.available() > 0 && count < packetLen; count++) {
+    if (client.connected()) {
+        for (int count = 0; client.available() > 0 && count < packetLen; count++) {
             buffer[count] = client.read();
         }
 
-        if(packetHealth(buffer) != 0)
-            return false;
-        /*int failCount = 0;
-        while(packetHealth(buffer) > 0) {
-            // make room
-            for(int i = 0; i < packetLen-1; i++)
-                buffer[i] = buffer[i+1];
+        int opcode = buffer[0] & 0xF;
 
-            while(client.available() == 0);
-
-            buffer[packetLen-1] = client.read();
-
-            failCount++;
+        switch (opcode) {
+            case 0:
+                type = TYPE_CONTINUATION;
+                break;
+            case 1:
+                type = TYPE_TEXT;
+                break;
+            case 2:
+                type = TYPE_BINARY;
+                break;
+            case 8:
+                type = TYPE_CLOSE;
+                break;
+            case 9:
+                type = TYPE_PING;
+                break;
+            case 10:
+                type = TYPE_PONG;
+                break;
+            default:
+                type = TYPE_UNKNOWN;
         }
 
-        if(failCount != 0)
-            Serial.println(failCount);
-        */
+        if (type == TYPE_TEXT || type == TYPE_BINARY) {
+            int lengthType = buffer[1] & 127;
+            int length = (buffer[2] << 8) | buffer[3];
+            //if(lengthType == 126) {
 
-        for(int i = 0; i < dataLen; i++) {
-            data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
+            for (int i = 0; i < length && i < MAX_BUFFER; i++) {
+                data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
+            }
         }
     }
 
-    return true;
+    return type;
 }
 
 /** Read one value from a client. */
@@ -274,9 +258,9 @@ void SparkWebSocketServer::doIt()
             disconnectClient();
         } else {
             String req;
-            bool success = getData(req, *source);
+            PacketType type = readPacket(req, *source);
 
-            if(success && req.length() > 0) {
+            if (type == TYPE_BINARY) {
 #ifdef DEBUG_WS
                 Serial.print("got : ");
                 Serial.println(req);
@@ -290,11 +274,9 @@ void SparkWebSocketServer::doIt()
 #endif
 
                 sendData(result, *source);
+            } else if (type == TYPE_CLOSE) {
+                disconnectClient();
             }
-
-            /*if(beat) {
-                sendData("HB", *source);
-            }*/
         }
 
         // disconnect client on timeout

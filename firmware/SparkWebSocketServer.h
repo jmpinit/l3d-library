@@ -49,11 +49,23 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 #define CRLF "\r\n"
 
 #define HB_INTERVAL 2500
-#define TIMEOUT 5000
+#define TIMEOUT     5000
+#define MAX_BUFFER  1024 // max size of packet accepted
 
 #ifndef CALLBACK_FUNCTIONS
 #define CALLBACK_FUNCTIONS 1
 #endif
+
+typedef enum {
+    TYPE_NONE,
+    TYPE_UNKNOWN,
+    TYPE_CONTINUATION,
+    TYPE_TEXT,
+    TYPE_BINARY,
+    TYPE_CLOSE,
+    TYPE_PING,
+    TYPE_PONG
+} PacketType;
 
 /**
  * call back function pointer.
@@ -72,7 +84,7 @@ class SparkWebSocketServer {
 
     bool handshake(TCPClient &client);
 
-    bool getData(String &data, TCPClient &client);
+    PacketType readPacket(String &data, TCPClient &client);
 
     void sendData(const char *str, TCPClient &client);
     void sendData(String str, TCPClient &client);
@@ -95,7 +107,6 @@ class SparkWebSocketServer {
 
     bool analyzeRequest(TCPClient &client);
     bool handleStream(String &data, TCPClient &client);
-    int packetHealth(char* buffer);
 
     void disconnectClient(void);
 
