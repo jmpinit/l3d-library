@@ -50,7 +50,6 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 
 #define HB_INTERVAL 2500
 #define TIMEOUT     1000
-#define MAX_BUFFER  1024 // max size of packet accepted
 
 #ifndef CALLBACK_FUNCTIONS
 #define CALLBACK_FUNCTIONS 1
@@ -58,7 +57,7 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 
 typedef enum {
     TYPE_NONE,
-    TYPE_UNKNOWN,
+    TYPE_BAD,
     TYPE_CONTINUATION,
     TYPE_TEXT,
     TYPE_BINARY,
@@ -94,7 +93,7 @@ class SparkWebSocketServer {
     CallBack cBack;
 
   private:
-    const int packetLen = 520;
+    const int packetLen = 524;
     const int dataLen = packetLen - 8; // length bytes and mask
 
     unsigned long lastBeatTime;

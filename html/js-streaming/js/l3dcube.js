@@ -4,6 +4,31 @@ function clamp(x, a, b) {
     return Math.max(a, Math.min(x, b));
 }
 
+var makeCRCTable = function(){
+    var c;
+    var crcTable = [];
+    for(var n =0; n < 256; n++){
+        c = n;
+        for(var k =0; k < 8; k++){
+            c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+        }
+        crcTable[n] = c;
+    }
+    return crcTable;
+}
+
+var crc32 = function(buf, len) {
+    var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
+    var crc = 0 ^ (-1);
+
+    var bufView = new Uint8Array(buf);
+    for (var i = 0; i < bufView.length && i < len; i++ ) {
+        crc = (crc >>> 8) ^ crcTable[(crc ^ bufView[i]) & 0xFF];
+    }
+
+    return (crc ^ (-1)) >>> 0;
+};
+
 function Color(r, g, b) {
     this.r = r;
     this.g = g;
@@ -25,7 +50,7 @@ function Cube(address) {
     
     this.rate = 1000;
     this.size = 8; // TODO support 16^3
-    this.frameSize = 512;
+    this.frameSize = 512 + 4;
 
     this.frameBuffer = new ArrayBuffer(this.frameSize);
 
@@ -53,6 +78,14 @@ Cube.prototype = {
                             cube.onrefresh(cube);
                         }
 
+                        // add crc32
+                        var crc = crc32(cube.frameBuffer, 512);
+                        var bufView = new Uint8Array(cube.frameBuffer);
+                        bufView[512] = (crc >> 24) & 0xff;
+                        bufView[513] = (crc >> 16) & 0xff;
+                        bufView[514] = (crc >> 8) & 0xff;
+                        bufView[515] = crc & 0xff;
+
                         cube.ws.send(cube.frameBuffer);
                         cube.clearToSend = false; // must get reply before sending again
 
@@ -79,6 +112,9 @@ Cube.prototype = {
         var cube = this;
 
         this.ws.onclose = function() {
+            cube.clearToSend = false;
+            cube._clock.postMessage(["stop"]);
+
             if(cube.onclose !== undefined) {
                 cube.onclose(cube);
             }

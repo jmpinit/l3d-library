@@ -133,15 +133,16 @@ PacketType SparkWebSocketServer::readPacket(String &data, TCPClient &client)
                 type = TYPE_PONG;
                 break;
             default:
-                type = TYPE_UNKNOWN;
+                type = TYPE_BAD;
         }
 
         if (type == TYPE_TEXT || type == TYPE_BINARY) {
             int lengthType = buffer[1] & 127;
             int length = (buffer[2] << 8) | buffer[3];
-            //if(lengthType == 126) {
+            if(lengthType != 126 || length != dataLen)
+                return TYPE_BAD;
 
-            for (int i = 0; i < length && i < MAX_BUFFER; i++) {
+            for (int i = 0; i < length && i < packetLen; i++) {
                 data += (char) (buffer[i+8] ^ buffer[4 + i % 4]);
             }
         }
