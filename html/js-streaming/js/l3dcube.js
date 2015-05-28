@@ -18,7 +18,11 @@ function Point(x, y) {
 function Cube(address) {
     this.address = address;
 
-    this.clearToSend = true;
+    this.timeout = 1000; // reconnect after no reply in this # of ms
+    this.clearToSend = false;
+    this.timeOfLastReply = null; // ms since last response
+    this.waiting = false; // true if waiting for ack
+    
     this.rate = 1000;
     this.size = 8; // TODO support 16^3
     this.frameSize = 512;
@@ -51,12 +55,15 @@ Cube.prototype = {
 
                         cube.ws.send(cube.frameBuffer);
                         cube.clearToSend = false; // must get reply before sending again
+
                         cube._clock.postMessage(["set", cube.rate]);
                         document.title = "sent " + testTimer; // FIXME
                     } else {
-                        // check for readiness every 5 millis
-                        cube._clock.postMessage(["set", 5]);
-                        //document.title = "wait " + testTimer; // FIXME
+                        // try to reconnect if timed out
+                        if (cube.timeOfLastReply != null && Date.now() - cube.timeOfLastReply > cube.timeout) {
+                            cube.timeOfLastReply = null;
+                            cube.ws.close();
+                        }
                     }
                 }
             });
@@ -76,7 +83,8 @@ Cube.prototype = {
                 cube.onclose(cube);
             }
 
-            // TODO try to reconnect
+            // try to reconnect
+            cube.stream();
         };
 
         this.ws.onopen = function() {
@@ -87,6 +95,7 @@ Cube.prototype = {
             console.log("connected!");
             
             // start streaming
+            cube.clearToSend = true;
             cube._clock.postMessage(["set", cube.rate]);
         };
 
@@ -96,6 +105,7 @@ Cube.prototype = {
 
             if(parseInt(msg) == cube.frameSize) {
                 cube.clearToSend = true;
+                cube.timeOfLastReply = Date.now();
             } else {
                 // TODO reconnect, because something is wrong
             }
