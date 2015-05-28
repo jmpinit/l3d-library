@@ -49,7 +49,7 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 #define CRLF "\r\n"
 
 #define HB_INTERVAL 2500
-#define TIMEOUT     5000
+#define TIMEOUT     1000
 #define MAX_BUFFER  1024 // max size of packet accepted
 
 #ifndef CALLBACK_FUNCTIONS
