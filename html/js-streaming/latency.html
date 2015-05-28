@@ -10,6 +10,7 @@
     <table>
         <tr><td>Cube IP:</td><td><input type="text" id="ip"></input></td>
         <td><button id="connect">Connect</button></td></tr>
+        <td><button id="disconnect">Break connection</button></td></tr>
         <tr><td>Status:</td><td id="status">Disconnected</td></tr>
     </table>
 
@@ -98,7 +99,7 @@
                 $("#buffered").text(cube.ws.bufferedAmount);
 
                 // test pattern
-                sphere.x = 4 + 4 * Math.sin(time / 1000);
+                sphere.x = 4 + 4 * Math.sin(time / 100);
 
                 for(var z = 0; z < 8; z++) {
                     for(var y = 0; y < 8; y++) {
@@ -118,12 +119,12 @@
             cube.onopen = function(cube) {
                 console.log("Connected!");
                 $("#status").text("Connected");
-            }
+            };
 
             cube.onclose = function(cube) {
                 console.log("Disconnected.");
                 $("#status").text("Disconnected");
-            }
+            };
         }
 
         $("#connect").on("click", function() {
@@ -140,6 +141,10 @@
             } else {
                 alert("Please enter the IP address of the cube.");
             }
+        });
+
+        $("#disconnect").on("click", function() {
+            cube.ws.close();
         });
 
         $("#rate-in").change(function() {
