@@ -1,5 +1,3 @@
-var testTimer = 0;
-
 function clamp(x, a, b) {
     return Math.max(a, Math.min(x, b));
 }
@@ -60,6 +58,34 @@ function Cube(address) {
 Cube.prototype = {
     /*  Start transmitting the frame buffer to the cube */
     stream: function() {
+        function refresh() {
+            if (cube.clearToSend && cube.ws.bufferedAmount == 0) {
+                // give user chance to modify frame
+                if(cube.onrefresh !== undefined) {
+                    cube.onrefresh(cube);
+                }
+
+                // add crc32
+                var crc = crc32(cube.frameBuffer, 512);
+                var bufView = new Uint8Array(cube.frameBuffer);
+                bufView[512] = (crc >> 24) & 0xff;
+                bufView[513] = (crc >> 16) & 0xff;
+                bufView[514] = (crc >> 8) & 0xff;
+                bufView[515] = crc & 0xff;
+
+                cube.ws.send(cube.frameBuffer);
+                cube.clearToSend = false; // must get reply before sending again
+
+                cube._clock.postMessage(["set", cube.rate]);
+            } else {
+                // try to reconnect if timed out
+                if (cube.timeOfLastReply != null && Date.now() - cube.timeOfLastReply > cube.timeout) {
+                    cube.timeOfLastReply = null;
+                    cube.ws.close();
+                }
+            }
+        }
+
         if (window.Worker) {
             this._clock = new Worker("js/clockworker.js");
 
@@ -69,40 +95,32 @@ Cube.prototype = {
 
             var cube = this;
             this._clock.addEventListener('message', function(e) {
-                testTimer += 1;
-
                 if (e.data === "tick") {
-                    if (cube.clearToSend && cube.ws.bufferedAmount == 0) {
-                        // give user chance to modify frame
-                        if(cube.onrefresh !== undefined) {
-                            cube.onrefresh(cube);
-                        }
-
-                        // add crc32
-                        var crc = crc32(cube.frameBuffer, 512);
-                        var bufView = new Uint8Array(cube.frameBuffer);
-                        bufView[512] = (crc >> 24) & 0xff;
-                        bufView[513] = (crc >> 16) & 0xff;
-                        bufView[514] = (crc >> 8) & 0xff;
-                        bufView[515] = crc & 0xff;
-
-                        cube.ws.send(cube.frameBuffer);
-                        cube.clearToSend = false; // must get reply before sending again
-
-                        cube._clock.postMessage(["set", cube.rate]);
-                        document.title = "sent " + testTimer; // FIXME
-                    } else {
-                        // try to reconnect if timed out
-                        if (cube.timeOfLastReply != null && Date.now() - cube.timeOfLastReply > cube.timeout) {
-                            cube.timeOfLastReply = null;
-                            cube.ws.close();
-                        }
-                    }
+                    refresh();
                 }
             });
         } else {
-            alert("web workers not supported.");
-            console.log("web workers not supported.");
+            this._clock = {
+                interval: null,
+                setInterval: function(ms) {
+                    this.interval = setInterval(function() {
+                        refresh();
+                    }, ms);
+                },
+                clearInterval: function() {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                },
+                postMessage: function(msg) {
+                    if (msg[0] === "set") {
+                        if (this.interval !== null)
+                            this.clearInterval();
+                        this.setInterval(msg[1]);
+                    } else if (msg[0] === "stop") {
+                        this.clearInterval();
+                    }
+                }
+            };
         }
 
         // open connection
