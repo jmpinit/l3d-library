@@ -88,7 +88,7 @@ class SparkWebSocketServer {
     void sendData(const char *str, TCPClient &client);
     void sendData(String str, TCPClient &client);
 
-    void doIt();
+    void tick();
 
     CallBack cBack;
 

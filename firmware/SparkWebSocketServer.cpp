@@ -214,7 +214,7 @@ void SparkWebSocketServer::sendData(String str, TCPClient &client)
     }
 }
 
-void SparkWebSocketServer::doIt()
+void SparkWebSocketServer::tick()
 {
     // heartbeat
 
